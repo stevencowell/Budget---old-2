@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cowell Family Budget Command Centre</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>Cowell Family Budget Command Centre</h1>
+        <p class="subtitle">Comprehensive financial management with powerful planning tools</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" id="exportData">Export Data</button>
+        <button class="btn-secondary" id="importData">Import Data</button>
+        <input type="file" id="importFile" accept=".json" style="display: none;">
+        <div class="generated-time" id="generatedTime"></div>
+      </div>
+    </header>
+
+    <nav class="app-nav">
+      <button class="nav-btn active" data-view="overview">Overview</button>
+      <button class="nav-btn" data-view="budget">Budget Manager</button>
+      <button class="nav-btn" data-view="statements">Monthly Statements</button>
+      <button class="nav-btn" data-view="planning">Financial Planning</button>
+      <button class="nav-btn" data-view="transactions">Transactions</button>
+      <button class="nav-btn" data-view="categories">Category Manager</button>
+      <button class="nav-btn" data-view="ai-insights">🤖 AI Insights</button>
+    </nav>
+
+    <main id="app" class="app">
+      <!-- Overview View -->
+      <div class="view active" id="overview-view">
+        <section class="card">
+          <div class="card-header">
+            <h2>Overview Filters</h2>
+            <p class="helper">Filter all overview data by date range or specific months</p>
+          </div>
+          <div class="overview-filters">
+            <label>
+              <span>Period:</span>
+              <select id="overviewPeriodFilter" class="filter-select">
+                <option value="all">All Time (13 months)</option>
+                <option value="last12">Last 12 Months</option>
+                <option value="last6">Last 6 Months</option>
+                <option value="last3">Last 3 Months</option>
+                <option value="ytd">Year to Date</option>
+                <option value="custom">Custom Date Range</option>
+              </select>
+            </label>
+            <div id="customDateRange" style="display: none;">
+              <label>
+                <span>From:</span>
+                <input type="month" id="overviewDateFrom" class="date-input">
+              </label>
+              <label>
+                <span>To:</span>
+                <input type="month" id="overviewDateTo" class="date-input">
+              </label>
+            </div>
+            <button class="btn-secondary" id="clearOverviewFilters">Clear Filters</button>
+          </div>
+        </section>
+
+        <section class="card-grid" id="summaryCards" aria-label="Financial snapshot"></section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Financial Trends</h2>
+            <p class="helper">Visualize your income, expenses, and net position over time</p>
+          </div>
+          <div class="chart-controls">
+            <label>
+              <input type="checkbox" id="showIncome" checked> Income
+            </label>
+            <label>
+              <input type="checkbox" id="showExpenses" checked> Expenses
+            </label>
+            <label>
+              <input type="checkbox" id="showNet" checked> Net
+            </label>
+          </div>
+          <canvas id="monthlyTrendChart"></canvas>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Category Distribution</h2>
+            <p class="helper">Breakdown of spending by category</p>
+          </div>
+          <div class="chart-container">
+            <canvas id="categoryPieChart"></canvas>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="categoryHeading">
+          <div class="card-header">
+            <h2 id="categoryHeading">Where the money goes</h2>
+            <p class="helper">Click on any category to see detailed transactions and breakdown.</p>
+          </div>
+          <div class="bars" id="categoryBars" role="list"></div>
+        </section>
+
+        <section class="card" aria-labelledby="airbnbHeading">
+          <div class="card-header">
+            <h2 id="airbnbHeading">Airbnb performance deep dive</h2>
+            <p class="helper">Track utilities, cleaning costs, and the impact of extra loan repayments.</p>
+          </div>
+          <div class="airbnb-grid" id="airbnbSummary"></div>
+        </section>
+
+        <section class="card" aria-labelledby="merchantHeading">
+          <div class="card-header">
+            <h2 id="merchantHeading">Top spending partners</h2>
+            <p class="helper">Keep an eye on the vendors receiving most of your cash.</p>
+          </div>
+          <ol class="rank-list" id="merchantList"></ol>
+        </section>
+
+        <section class="card" aria-labelledby="incomeHeading">
+          <div class="card-header">
+            <h2 id="incomeHeading">Reliable income sources</h2>
+            <p class="helper">Income categories ranked by 12-month totals.</p>
+          </div>
+          <ol class="rank-list" id="incomeList"></ol>
+        </section>
+      </div>
+
+      <!-- Budget Manager View -->
+      <div class="view" id="budget-view">
+        <section class="card" aria-labelledby="budgetHeading">
+          <div class="card-header">
+            <h2 id="budgetHeading">Budget vs actual performance</h2>
+            <p class="helper">Create, modify, and track your budget allocations</p>
+            <div class="card-actions">
+              <button class="btn-primary" id="addBudgetItem">+ Add Budget Item</button>
+              <button class="btn-secondary" id="saveBudget">Save Budget</button>
+              <button class="btn-secondary" id="resetBudget">Reset to Defaults</button>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="budgetTable">
+              <thead>
+                <tr>
+                  <th scope="col">Category</th>
+                  <th scope="col">Item</th>
+                  <th scope="col">Annual budget</th>
+                  <th scope="col">Actual (12 mths)</th>
+                  <th scope="col">Variance</th>
+                  <th scope="col">% of Budget</th>
+                  <th scope="col" class="actions-column">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot>
+                <tr class="totals-row">
+                  <th scope="row" colspan="2">Totals</th>
+                  <td id="budgetTotalBudget"></td>
+                  <td id="budgetTotalActual"></td>
+                  <td id="budgetTotalVariance"></td>
+                  <td id="budgetTotalPercent"></td>
+                  <td class="actions-cell"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Budget Progress Chart</h2>
+            <p class="helper">Visual comparison of budgeted vs actual spending</p>
+          </div>
+          <canvas id="budgetProgressChart"></canvas>
+        </section>
+      </div>
+
+      <!-- Monthly Statements View -->
+      <div class="view" id="statements-view">
+        <section class="card">
+          <div class="card-header">
+            <h2>Monthly Statement Analysis</h2>
+            <p class="helper">Deep dive into each month's financial activity</p>
+            <div class="card-actions">
+              <select id="monthSelector" class="month-selector"></select>
+              <button class="btn-secondary" id="downloadStatement">Download PDF</button>
+            </div>
+          </div>
+          
+          <div class="statement-summary">
+            <div class="stat-card">
+              <h3>Income</h3>
+              <div class="stat-value" id="statementIncome">$0</div>
+              <div class="stat-change" id="statementIncomeChange"></div>
+            </div>
+            <div class="stat-card">
+              <h3>Expenses</h3>
+              <div class="stat-value" id="statementExpenses">$0</div>
+              <div class="stat-change" id="statementExpensesChange"></div>
+            </div>
+            <div class="stat-card">
+              <h3>Net Position</h3>
+              <div class="stat-value" id="statementNet">$0</div>
+              <div class="stat-change" id="statementNetChange"></div>
+            </div>
+            <div class="stat-card">
+              <h3>Savings Rate</h3>
+              <div class="stat-value" id="statementSavingsRate">0%</div>
+              <div class="stat-change" id="statementSavingsRateChange"></div>
+            </div>
+          </div>
+
+          <div class="statement-details">
+            <h3>Category Breakdown</h3>
+            <canvas id="statementCategoryChart"></canvas>
+          </div>
+
+          <div class="statement-insights" id="statementInsights">
+            <h3>Key Insights & Opportunities</h3>
+            <ul id="insightsList"></ul>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="cashflowHeading">
+          <div class="card-header">
+            <h2 id="cashflowHeading">Monthly cashflow trend</h2>
+            <p class="helper">Compare actual incomes and expenses month-by-month</p>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="cashflowTable">
+              <thead>
+                <tr>
+                  <th scope="col">Month</th>
+                  <th scope="col">Income</th>
+                  <th scope="col">Expenses</th>
+                  <th scope="col">Net</th>
+                  <th scope="col">Savings Rate</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Financial Planning View -->
+      <div class="view" id="planning-view">
+        <section class="card">
+          <div class="card-header">
+            <h2>Financial Planning Studio</h2>
+            <p class="helper">Advanced calculators to model scenarios and plan your financial future</p>
+          </div>
+          <div class="planner-grid">
+            <article class="planner-card" aria-labelledby="fortnightTitle">
+              <h3 id="fortnightTitle">Fortnightly lifestyle tuner</h3>
+              <p class="helper">Adjust essentials and flexible spending to optimize savings</p>
+              <form class="form" id="fortnightForm">
+                <label>Fortnightly after-tax income
+                  <input type="number" id="fortnightIncome" min="0" step="0.01" required />
+                </label>
+                <label>Essential commitments
+                  <input type="number" id="fortnightEssential" min="0" step="0.01" required />
+                </label>
+                <label>Flexible lifestyle spend
+                  <input type="number" id="fortnightFlexible" min="0" step="0.01" required />
+                </label>
+                <div class="result" id="fortnightResult" role="status"></div>
+              </form>
+            </article>
+
+            <article class="planner-card" aria-labelledby="savingsTitle">
+              <h3 id="savingsTitle">Savings goal mapper</h3>
+              <p class="helper">Calculate timeline and required contributions for your goals</p>
+              <form class="form" id="savingsForm">
+                <label>Goal amount
+                  <input type="number" id="savingsGoal" min="0" step="100" required />
+                </label>
+                <label>Current savings
+                  <input type="number" id="savingsCurrent" min="0" step="100" required />
+                </label>
+                <label>Monthly contribution
+                  <input type="number" id="savingsMonthly" min="0" step="50" required />
+                </label>
+                <label>Interest rate (% p.a.)
+                  <input type="number" id="savingsInterest" min="0" max="15" step="0.1" value="3.0" />
+                </label>
+                <div class="result" id="savingsResult" role="status"></div>
+              </form>
+            </article>
+
+            <article class="planner-card" aria-labelledby="debtTitle">
+              <h3 id="debtTitle">Debt payoff accelerator</h3>
+              <p class="helper">See how extra payments reduce your loan term and interest</p>
+              <form class="form" id="debtForm">
+                <label>Current loan balance
+                  <input type="number" id="debtBalance" min="0" step="1000" required />
+                </label>
+                <label>Interest rate (% p.a.)
+                  <input type="number" id="debtRate" min="0" max="15" step="0.1" required />
+                </label>
+                <label>Minimum monthly payment
+                  <input type="number" id="debtMinPayment" min="0" step="100" required />
+                </label>
+                <label>Extra monthly payment
+                  <input type="number" id="debtExtraPayment" min="0" step="100" value="0" />
+                </label>
+                <div class="result" id="debtResult" role="status"></div>
+              </form>
+            </article>
+
+            <article class="planner-card" aria-labelledby="airbnbPlannerTitle">
+              <h3 id="airbnbPlannerTitle">Airbnb safety buffer</h3>
+              <p class="helper">Model occupancy changes and calculate emergency reserves</p>
+              <label for="airbnbDrop">Expected drop in Airbnb income: <span id="airbnbDropValue">10%</span></label>
+              <input type="range" id="airbnbDrop" min="0" max="50" step="5" value="10" />
+              <div class="result" id="airbnbBuffer" role="status"></div>
+            </article>
+
+            <article class="planner-card" aria-labelledby="retirementTitle">
+              <h3 id="retirementTitle">Retirement projection</h3>
+              <p class="helper">Estimate retirement savings with compound growth</p>
+              <form class="form" id="retirementForm">
+                <label>Current retirement balance
+                  <input type="number" id="retirementBalance" min="0" step="10000" value="0" />
+                </label>
+                <label>Monthly contribution
+                  <input type="number" id="retirementContribution" min="0" step="100" value="500" />
+                </label>
+                <label>Years until retirement
+                  <input type="number" id="retirementYears" min="1" max="50" value="30" />
+                </label>
+                <label>Expected return (% p.a.)
+                  <input type="number" id="retirementReturn" min="0" max="15" step="0.5" value="7.0" />
+                </label>
+                <div class="result" id="retirementResult" role="status"></div>
+              </form>
+            </article>
+
+            <article class="planner-card" aria-labelledby="scenarioTitle">
+              <h3 id="scenarioTitle">What-if scenario modeler</h3>
+              <p class="helper">Compare different financial scenarios side-by-side</p>
+              <form class="form" id="scenarioForm">
+                <label>Scenario name
+                  <input type="text" id="scenarioName" placeholder="e.g., New Car Purchase" />
+                </label>
+                <label>Monthly cost change
+                  <input type="number" id="scenarioCostChange" step="50" value="0" />
+                </label>
+                <label>Duration (months)
+                  <input type="number" id="scenarioDuration" min="1" max="360" value="12" />
+                </label>
+                <button type="button" class="btn-primary" id="addScenario">Add Scenario</button>
+                <div class="result" id="scenarioResult" role="status"></div>
+              </form>
+              <div id="scenarioList"></div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <!-- Transactions View -->
+      <div class="view" id="transactions-view">
+        <section class="card" aria-labelledby="transactionsHeading">
+          <div class="card-header">
+            <h2 id="transactionsHeading">Transaction explorer</h2>
+            <p class="helper">Filter, search, and manage all your transactions</p>
+          </div>
+          <div class="transaction-controls">
+            <input type="text" id="transactionSearch" placeholder="Search transactions..." class="search-input">
+            <select id="transactionCategory" class="filter-select">
+              <option value="all">All categories</option>
+            </select>
+            <select id="transactionType" class="filter-select">
+              <option value="all">All types</option>
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+            <input type="date" id="transactionDateFrom" class="date-input">
+            <input type="date" id="transactionDateTo" class="date-input">
+            <button class="btn-secondary" id="clearFilters">Clear Filters</button>
+          </div>
+          <div class="transaction-stats" id="transactionStats">
+            <div class="stat-item">
+              <span class="stat-label">Showing:</span>
+              <span class="stat-value" id="transactionCount">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Total:</span>
+              <span class="stat-value" id="transactionTotal">$0</span>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="transactionTable">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Subcategory</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="transactionPagination">
+            <button id="prevPage" class="btn-secondary">Previous</button>
+            <span id="pageInfo">Page 1 of 1</span>
+            <button id="nextPage" class="btn-secondary">Next</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Category Manager View -->
+      <div class="view" id="categories-view">
+        <section class="card" aria-labelledby="categoriesHeading">
+          <div class="card-header">
+            <h2 id="categoriesHeading">Category Manager</h2>
+            <p class="helper">Organize and analyze your expenses by category with complete breakdowns</p>
+            <div class="card-actions">
+              <button class="btn-primary" id="uploadStatement">📤 Upload Statement</button>
+              <input type="file" id="uploadStatementFile" accept=".csv" style="display: none;">
+              <button class="btn-secondary" id="exportCategories">Export Categories</button>
+            </div>
+          </div>
+
+          <!-- Category Filters -->
+          <div class="category-filters">
+            <select id="categoryFilter" class="filter-select">
+              <option value="all">All Categories</option>
+            </select>
+            <select id="categoryTypeFilter" class="filter-select">
+              <option value="all">All Types</option>
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+            <select id="categoryPeriodFilter" class="filter-select">
+              <option value="all">All Time</option>
+              <option value="month">This Month</option>
+              <option value="quarter">This Quarter</option>
+              <option value="year">This Year</option>
+            </select>
+          </div>
+
+          <!-- Category Summary Cards -->
+          <div class="category-summary-grid" id="categorySummaryGrid"></div>
+
+          <!-- Detailed Category Breakdown -->
+          <div class="table-wrapper">
+            <table class="data-table" id="categoryBreakdownTable">
+              <thead>
+                <tr>
+                  <th scope="col">Category</th>
+                  <th scope="col">Subcategory</th>
+                  <th scope="col">Income</th>
+                  <th scope="col">Expenses</th>
+                  <th scope="col">Net</th>
+                  <th scope="col">% of Total</th>
+                  <th scope="col">Transactions</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Category Details/Edit Panel -->
+        <section class="card" id="categoryDetailPanel" style="display: none;">
+          <div class="card-header">
+            <h2 id="categoryDetailTitle">Category Details</h2>
+            <button class="btn-secondary" id="closeCategoryDetail">✕ Close</button>
+          </div>
+          <div id="categoryDetailContent"></div>
+          <div class="table-wrapper">
+            <h3>Transactions in this category</h3>
+            <table class="data-table" id="categoryTransactionsTable">
+              <thead>
+                <tr>
+                  <th scope="col"><input type="checkbox" id="selectAllCategoryTx"></th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="bulk-actions">
+            <label>Move selected to:
+              <select id="bulkMoveCategory" class="filter-select"></select>
+              <select id="bulkMoveSubcategory" class="filter-select"></select>
+            </label>
+            <button class="btn-primary" id="applyBulkMove">Apply</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- AI Insights View -->
+      <div class="view" id="ai-insights-view">
+        <section class="card">
+          <div class="card-header">
+            <h2>🤖 AI Financial Assistant</h2>
+            <p class="helper">Intelligent analysis of your spending patterns with personalized recommendations for savings</p>
+            <div class="card-actions">
+              <button class="btn-primary" id="runAIAnalysis">🔄 Refresh Analysis</button>
+              <button class="btn-secondary" id="exportInsights">Export Report</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI Summary Cards -->
+        <div class="ai-summary-grid" id="aiSummaryGrid">
+          <div class="ai-card priority-high">
+            <div class="ai-card-icon">💰</div>
+            <h3>Potential Monthly Savings</h3>
+            <div class="ai-value" id="aiPotentialSavings">Analyzing...</div>
+            <p class="ai-helper">Based on identified opportunities</p>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-icon">🔁</div>
+            <h3>Recurring Payments</h3>
+            <div class="ai-value" id="aiRecurringCount">Analyzing...</div>
+            <p class="ai-helper">Auto-detected subscriptions</p>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-icon">⚠️</div>
+            <h3>Unusual Patterns</h3>
+            <div class="ai-value" id="aiAnomalyCount">Analyzing...</div>
+            <p class="ai-helper">Transactions requiring attention</p>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-icon">📊</div>
+            <h3>Spending Score</h3>
+            <div class="ai-value" id="aiSpendingScore">Analyzing...</div>
+            <p class="ai-helper">Overall financial health</p>
+          </div>
+        </div>
+
+        <!-- Subscription Analysis -->
+        <section class="card">
+          <div class="card-header">
+            <h2>🔁 Subscription & Recurring Payment Analysis</h2>
+            <p class="helper">AI-detected regular payments that may need review</p>
+          </div>
+          <div class="subscription-insights" id="subscriptionInsights">
+            <div class="loading">Analyzing your transactions...</div>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="subscriptionTable">
+              <thead>
+                <tr>
+                  <th scope="col">Merchant</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Subcategory</th>
+                  <th scope="col">Frequency</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Annual Cost</th>
+                  <th scope="col">Last Seen</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Savings Opportunities -->
+        <section class="card">
+          <div class="card-header">
+            <h2>💡 AI-Powered Savings Opportunities</h2>
+            <p class="helper">Personalized recommendations based on your spending patterns</p>
+          </div>
+          <div class="savings-opportunities" id="savingsOpportunities"></div>
+        </section>
+
+        <!-- Spending Anomalies -->
+        <section class="card">
+          <div class="card-header">
+            <h2>⚠️ Unusual Spending Patterns</h2>
+            <p class="helper">Transactions that deviate from your typical behavior</p>
+          </div>
+          <div class="anomaly-filters">
+            <label>
+              <input type="checkbox" id="showAllAnomalies" checked> Show all
+            </label>
+            <label>
+              <input type="checkbox" id="showHighOnly"> High priority only
+            </label>
+          </div>
+          <div class="anomalies-list" id="anomaliesList"></div>
+        </section>
+
+        <!-- Category Deep Dive -->
+        <section class="card">
+          <div class="card-header">
+            <h2>📈 Category Spending Trends</h2>
+            <p class="helper">How your spending in each category has changed over time</p>
+          </div>
+          <div class="category-trends">
+            <select id="trendCategorySelect" class="filter-select">
+              <option value="">Select a category to analyze...</option>
+            </select>
+            <div id="categoryTrendChart" style="margin-top: 1rem;">
+              <canvas id="categoryTrendCanvas"></canvas>
+            </div>
+            <div id="categoryTrendInsights" class="trend-insights"></div>
+          </div>
+        </section>
+
+        <!-- Subcategory Manager -->
+        <section class="card">
+          <div class="card-header">
+            <h2>🏷️ Enhanced Subcategory Management</h2>
+            <p class="helper">Create custom subcategories for granular expense tracking (e.g., Netflix, Spotify, Disney+)</p>
+            <div class="card-actions">
+              <button class="btn-primary" id="addSubcategoryRule">+ Add Subcategory Rule</button>
+            </div>
+          </div>
+          <div class="subcategory-rules" id="subcategoryRules">
+            <div class="helper-box">
+              <p><strong>How it works:</strong> Create rules to automatically assign custom subcategories based on merchant names. 
+              For example, all "NETFLIX" transactions can be automatically tagged as "Subscriptions > Netflix".</p>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table" id="subcategoryRulesTable">
+                <thead>
+                  <tr>
+                    <th scope="col">Keyword/Merchant</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Subcategory</th>
+                    <th scope="col">Matches</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI Recommendations Summary -->
+        <section class="card">
+          <div class="card-header">
+            <h2>🎯 Action Plan</h2>
+            <p class="helper">Prioritized recommendations for immediate action</p>
+          </div>
+          <div class="action-plan" id="actionPlan"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <p>Built for Steve &amp; Anne to stay confident, proactive, and in sync with their goals.</p>
+    </footer>
+
+    <script id="financialData" type="application/json" data-src="../data/financial_overview.json"></script>
+    <script src="./main.js" data-json-path="../data/financial_overview.json"></script>
+  </body>
+</html>
