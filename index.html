@@ -28,6 +28,7 @@
       <button class="nav-btn" data-view="planning">Financial Planning</button>
       <button class="nav-btn" data-view="transactions">Transactions</button>
       <button class="nav-btn" data-view="categories">Category Manager</button>
+      <button class="nav-btn" data-view="tax">💰 Tax Hub</button>
       <button class="nav-btn" data-view="ai-insights">🤖 AI Insights</button>
     </nav>
 
@@ -498,6 +499,237 @@
               <select id="bulkMoveSubcategory" class="filter-select"></select>
             </label>
             <button class="btn-primary" id="applyBulkMove">Apply</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tax Hub View -->
+      <div class="view" id="tax-view">
+        <section class="card">
+          <div class="card-header">
+            <h2>💰 Tax Planning & Tracking Hub</h2>
+            <p class="helper">Australian tax calculator (2024-25) with automatic income categorization and optimization</p>
+            <div class="card-actions">
+              <button class="btn-primary" id="calculateTax">🔄 Calculate Tax</button>
+              <button class="btn-secondary" id="exportTaxReport">Export Tax Report</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tax Summary Cards -->
+        <div class="ai-summary-grid">
+          <div class="ai-card priority-high">
+            <div class="ai-card-icon">💵</div>
+            <h3>Estimated Tax Payable</h3>
+            <div class="ai-value" id="taxPayable">Calculating...</div>
+            <p class="ai-helper">Based on current income</p>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-icon">📊</div>
+            <h3>Taxable Income</h3>
+            <div class="ai-value" id="taxableIncome">Calculating...</div>
+            <p class="ai-helper">After deductions</p>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-icon">💰</div>
+            <h3>Total Deductions</h3>
+            <div class="ai-value" id="totalDeductions">Calculating...</div>
+            <p class="ai-helper">Tax-deductible expenses</p>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-icon">📈</div>
+            <h3>Effective Tax Rate</h3>
+            <div class="ai-value" id="effectiveTaxRate">Calculating...</div>
+            <p class="ai-helper">Your actual tax percentage</p>
+          </div>
+        </div>
+
+        <!-- Income Breakdown -->
+        <section class="card">
+          <div class="card-header">
+            <h2>📊 Income Breakdown (Auto-detected)</h2>
+            <p class="helper">Income automatically categorized from your transactions</p>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Income Type</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">% of Total</th>
+                  <th scope="col">Tax Treatment</th>
+                </tr>
+              </thead>
+              <tbody id="incomeBreakdownTable">
+                <tr><td colspan="4" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Tax Calculator -->
+        <section class="card">
+          <div class="card-header">
+            <h2>🧮 Tax Calculator (2024-25 Australian Tax Brackets)</h2>
+            <p class="helper">Calculate tax liability for different income scenarios</p>
+          </div>
+          <div class="planner-grid">
+            <article class="planner-card">
+              <h3>Calculate Your Tax</h3>
+              <form class="form" id="taxCalculatorForm">
+                <label>Gross Income (before deductions)
+                  <input type="number" id="taxCalcGrossIncome" min="0" step="1000" placeholder="Auto-filled from transactions" />
+                </label>
+                <label>Tax Deductions
+                  <input type="number" id="taxCalcDeductions" min="0" step="100" placeholder="Auto-filled" />
+                </label>
+                <label>Medicare Levy Exemption
+                  <select id="taxCalcMedicare">
+                    <option value="full">Full Medicare Levy (2%)</option>
+                    <option value="half">Half Medicare Levy (1%)</option>
+                    <option value="exempt">Exempt</option>
+                  </select>
+                </label>
+                <button type="button" class="btn-primary" id="runTaxCalc">Calculate</button>
+                <div class="result" id="taxCalcResult" role="status"></div>
+              </form>
+            </article>
+
+            <article class="planner-card">
+              <h3>Tax Brackets 2024-25</h3>
+              <div class="tax-brackets-info">
+                <div class="tax-bracket-item">
+                  <strong>$0 - $18,200:</strong> Tax-free threshold
+                </div>
+                <div class="tax-bracket-item">
+                  <strong>$18,201 - $45,000:</strong> 19%
+                </div>
+                <div class="tax-bracket-item">
+                  <strong>$45,001 - $120,000:</strong> 32.5%
+                </div>
+                <div class="tax-bracket-item">
+                  <strong>$120,001 - $180,000:</strong> 37%
+                </div>
+                <div class="tax-bracket-item">
+                  <strong>$180,001+:</strong> 45%
+                </div>
+                <div class="tax-bracket-item" style="margin-top: 1rem; border-top: 1px solid rgba(148, 163, 184, 0.2); padding-top: 1rem;">
+                  <strong>Medicare Levy:</strong> 2% (on taxable income)
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Deductions Tracker -->
+        <section class="card">
+          <div class="card-header">
+            <h2>📋 Tax-Deductible Expenses</h2>
+            <p class="helper">Track your deductions to reduce taxable income</p>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Category</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">% of Income</th>
+                </tr>
+              </thead>
+              <tbody id="deductionsTable">
+                <tr><td colspan="4" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Quarterly PAYG Estimates -->
+        <section class="card">
+          <div class="card-header">
+            <h2>📅 Quarterly PAYG Estimates</h2>
+            <p class="helper">Plan for quarterly tax payments based on projected annual income</p>
+          </div>
+          <div class="statement-summary">
+            <div class="stat-card">
+              <h3>Q1 (Jul-Sep)</h3>
+              <div class="stat-value" id="payg-q1">$0</div>
+              <div class="stat-change">Estimated</div>
+            </div>
+            <div class="stat-card">
+              <h3>Q2 (Oct-Dec)</h3>
+              <div class="stat-value" id="payg-q2">$0</div>
+              <div class="stat-change">Estimated</div>
+            </div>
+            <div class="stat-card">
+              <h3>Q3 (Jan-Mar)</h3>
+              <div class="stat-value" id="payg-q3">$0</div>
+              <div class="stat-change">Estimated</div>
+            </div>
+            <div class="stat-card">
+              <h3>Q4 (Apr-Jun)</h3>
+              <div class="stat-value" id="payg-q4">$0</div>
+              <div class="stat-change">Estimated</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tax Optimization Tips -->
+        <section class="card">
+          <div class="card-header">
+            <h2>💡 Tax Optimization Strategies</h2>
+            <p class="helper">Personalized tips based on your income and tax bracket</p>
+          </div>
+          <div class="savings-opportunities" id="taxOptimizationTips">
+            <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+              Calculate your tax to see personalized optimization strategies
+            </div>
+          </div>
+        </section>
+
+        <!-- Document Checklist -->
+        <section class="card">
+          <div class="card-header">
+            <h2>✅ Tax Document Checklist</h2>
+            <p class="helper">Keep track of important documents for tax time</p>
+          </div>
+          <div class="form" style="max-width: 800px;">
+            <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="checkbox" id="doc-payg" style="width: 1.25rem; height: 1.25rem;">
+              <span>PAYG Payment Summary / Income Statement</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="checkbox" id="doc-bank" style="width: 1.25rem; height: 1.25rem;">
+              <span>Bank Interest Statements</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="checkbox" id="doc-dividend" style="width: 1.25rem; height: 1.25rem;">
+              <span>Dividend Statements (with franking credits)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="checkbox" id="doc-rental" style="width: 1.25rem; height: 1.25rem;">
+              <span>Rental Property Income & Expense Records (Airbnb)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="checkbox" id="doc-health" style="width: 1.25rem; height: 1.25rem;">
+              <span>Private Health Insurance Statement</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="checkbox" id="doc-donations" style="width: 1.25rem; height: 1.25rem;">
+              <span>Donation Receipts</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="checkbox" id="doc-work" style="width: 1.25rem; height: 1.25rem;">
+              <span>Work-Related Expense Receipts</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="checkbox" id="doc-super" style="width: 1.25rem; height: 1.25rem;">
+              <span>Superannuation Statements</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="checkbox" id="doc-previous" style="width: 1.25rem; height: 1.25rem;">
+              <span>Previous Year's Tax Return</span>
+            </label>
           </div>
         </section>
       </div>
