@@ -121,6 +121,9 @@ function initNavigation() {
     button.addEventListener('click', () => {
       const viewId = button.getAttribute('data-view');
       
+      // Skip if this is a special button without data-view attribute
+      if (!viewId) return;
+      
       navButtons.forEach(btn => btn.classList.remove('active'));
       views.forEach(view => view.classList.remove('active'));
       
@@ -128,6 +131,20 @@ function initNavigation() {
       document.getElementById(`${viewId}-view`).classList.add('active');
     });
   });
+  
+  // Add handler for Superannuation Tracker button
+  const superBtn = document.getElementById('superannuationAppBtn');
+  if (superBtn) {
+    superBtn.addEventListener('click', () => {
+      // Open the React superannuation app
+      // In development, the React app runs on port 3000
+      // In production, adjust this URL to where the app is deployed
+      const superAppUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000' 
+        : '/superannuation';
+      window.open(superAppUrl, '_blank');
+    });
+  }
 }
 
 // ==================== Chart Utilities ====================
