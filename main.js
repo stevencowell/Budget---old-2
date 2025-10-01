@@ -138,10 +138,9 @@ function initNavigation() {
     superBtn.addEventListener('click', () => {
       // Open the React superannuation app
       // In development, the React app runs on port 3000
-      // In production, adjust this URL to where the app is deployed
-      const superAppUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3000' 
-        : '/superannuation';
+      // In production, it's deployed to GitHub Pages
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const superAppUrl = isLocal ? 'http://localhost:3000' : '/superannuation/app';
       window.open(superAppUrl, '_blank');
     });
   }
