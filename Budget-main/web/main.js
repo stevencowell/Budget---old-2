@@ -1260,24 +1260,41 @@ function renderCashflow(monthly) {
           <td class="${netClass}">${currencyPrecise.format(row.net)}</td>
           <td>${savingsRate}%</td>
           <td>
-            <button class="table-action-btn" data-action="view-month" data-month="${index}">View Details</button>
+            <div class="table-actions">
+              <button class="table-action-btn" data-action="view-month" data-month="${index}">View Details</button>
+              <button class="table-action-btn" data-action="view-transactions" data-month-string="${row.month}">View Transactions</button>
+            </div>
           </td>
         </tr>
       `;
     })
     .join('');
 
-  // Add event listener for view details
+  // Add event listener for view details and view transactions
   tbody.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action="view-month"]');
-    if (btn) {
-      const monthIndex = btn.dataset.month;
+    const viewMonthBtn = e.target.closest('[data-action="view-month"]');
+    if (viewMonthBtn) {
+      const monthIndex = viewMonthBtn.dataset.month;
       document.querySelector('.nav-btn[data-view="statements"]').click();
       setTimeout(() => {
         const selector = document.getElementById('monthSelector');
         if (selector) {
           selector.value = monthIndex;
           selector.dispatchEvent(new Event('change'));
+        }
+      }, 100);
+      return;
+    }
+
+    const viewTransactionsBtn = e.target.closest('[data-action="view-transactions"]');
+    if (viewTransactionsBtn) {
+      const monthString = viewTransactionsBtn.dataset.monthString;
+      // Navigate to transactions view
+      document.querySelector('.nav-btn[data-view="transactions"]').click();
+      // Apply month filter after a short delay to ensure the view is rendered
+      setTimeout(() => {
+        if (window.applyMonthFilterToTransactions) {
+          window.applyMonthFilterToTransactions(monthString);
         }
       }, 100);
     }
@@ -1632,6 +1649,22 @@ function renderTransactions(transactions) {
       dateTo: ''
     },
     currentPage: 1
+  };
+
+  // Expose function to apply month filter from external code
+  window.applyMonthFilterToTransactions = (monthString) => {
+    // monthString format: YYYY-MM
+    const year = monthString.substring(0, 4);
+    const month = monthString.substring(5, 7);
+    const firstDay = `${year}-${month}-01`;
+    const lastDay = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+    
+    state.filters.dateFrom = firstDay;
+    state.filters.dateTo = lastDay;
+    dateFromInput.value = firstDay;
+    dateToInput.value = lastDay;
+    state.currentPage = 1;
+    draw();
   };
 
   function getFilteredTransactions() {
