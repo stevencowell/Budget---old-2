@@ -3702,6 +3702,9 @@ async function init() {
     // AI Insights view
     initAIInsights(data);
 
+    // Tax Hub view
+    initTaxHub(data);
+
     // Data management
     initDataManagement(data);
 
@@ -3711,6 +3714,446 @@ async function init() {
     if (app) {
       app.innerHTML = `<section class="card"><h2>Something went wrong</h2><p>${error.message}</p></section>`;
     }
+  }
+}
+
+// ==================== Tax Hub ====================
+
+// Australian Tax Brackets 2024-25
+const TAX_BRACKETS_2024_25 = [
+  { min: 0, max: 18200, rate: 0, baseTax: 0 },
+  { min: 18201, max: 45000, rate: 0.19, baseTax: 0 },
+  { min: 45001, max: 120000, rate: 0.325, baseTax: 5092 },
+  { min: 120001, max: 180000, rate: 0.37, baseTax: 29467 },
+  { min: 180001, max: Infinity, rate: 0.45, baseTax: 51667 }
+];
+
+const MEDICARE_LEVY_RATE = 0.02;
+
+function calculateAustralianTax(taxableIncome, medicareOption = 'full') {
+  if (taxableIncome <= 0) {
+    return {
+      incomeTax: 0,
+      medicareLevy: 0,
+      totalTax: 0,
+      effectiveRate: 0,
+      marginalRate: 0
+    };
+  }
+
+  // Find applicable bracket
+  let incomeTax = 0;
+  let marginalRate = 0;
+
+  for (const bracket of TAX_BRACKETS_2024_25) {
+    if (taxableIncome >= bracket.min && taxableIncome <= bracket.max) {
+      incomeTax = bracket.baseTax + (taxableIncome - bracket.min + 1) * bracket.rate;
+      marginalRate = bracket.rate;
+      break;
+    }
+  }
+
+  // Calculate Medicare Levy
+  let medicareLevy = 0;
+  if (medicareOption === 'full') {
+    medicareLevy = taxableIncome * MEDICARE_LEVY_RATE;
+  } else if (medicareOption === 'half') {
+    medicareLevy = taxableIncome * (MEDICARE_LEVY_RATE / 2);
+  }
+
+  const totalTax = incomeTax + medicareLevy;
+  const effectiveRate = taxableIncome > 0 ? (totalTax / taxableIncome) * 100 : 0;
+
+  return {
+    incomeTax: Math.round(incomeTax),
+    medicareLevy: Math.round(medicareLevy),
+    totalTax: Math.round(totalTax),
+    effectiveRate: effectiveRate,
+    marginalRate: marginalRate * 100
+  };
+}
+
+function calculateTaxFromData(data) {
+  const taxData = data.tax_data || {};
+  
+  const grossIncome = taxData.total_income || 0;
+  const deductions = taxData.airbnb_deductions || 0;
+  const taxableIncome = taxData.taxable_income || (grossIncome - deductions);
+
+  const taxResult = calculateAustralianTax(taxableIncome, 'full');
+
+  return {
+    grossIncome,
+    deductions,
+    taxableIncome,
+    ...taxResult,
+    salaryIncome: taxData.salary_income || 0,
+    airbnbIncome: taxData.airbnb_income || 0,
+    otherIncome: taxData.other_income || 0,
+    airbnbDeductions: taxData.airbnb_deductions || 0
+  };
+}
+
+function renderTaxSummaryCards(taxCalc) {
+  document.getElementById('taxPayable').textContent = currency.format(taxCalc.totalTax);
+  document.getElementById('taxableIncome').textContent = currency.format(taxCalc.taxableIncome);
+  document.getElementById('totalDeductions').textContent = currency.format(taxCalc.deductions);
+  document.getElementById('effectiveTaxRate').textContent = taxCalc.effectiveRate.toFixed(1) + '%';
+}
+
+function renderIncomeBreakdown(taxCalc) {
+  const tbody = document.getElementById('incomeBreakdownTable');
+  const totalIncome = taxCalc.grossIncome;
+
+  const incomeTypes = [
+    {
+      type: 'Salary & Wages',
+      amount: taxCalc.salaryIncome,
+      treatment: 'Fully taxable'
+    },
+    {
+      type: 'Airbnb Income',
+      amount: taxCalc.airbnbIncome,
+      treatment: 'Taxable (deductions apply)'
+    },
+    {
+      type: 'Other Income',
+      amount: taxCalc.otherIncome,
+      treatment: 'Various (check ATO guidelines)'
+    }
+  ];
+
+  tbody.innerHTML = incomeTypes.map(item => {
+    const percentage = totalIncome > 0 ? ((item.amount / totalIncome) * 100).toFixed(1) : 0;
+    return `
+      <tr>
+        <td><strong>${item.type}</strong></td>
+        <td class="variance-positive">${currency.format(item.amount)}</td>
+        <td>${percentage}%</td>
+        <td style="color: #94a3b8;">${item.treatment}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Add total row
+  tbody.innerHTML += `
+    <tr style="border-top: 2px solid rgba(148, 163, 184, 0.2); font-weight: 600;">
+      <td><strong>Total Gross Income</strong></td>
+      <td class="variance-positive">${currency.format(totalIncome)}</td>
+      <td>100%</td>
+      <td></td>
+    </tr>
+  `;
+}
+
+function renderDeductionsTable(taxCalc) {
+  const tbody = document.getElementById('deductionsTable');
+  const totalIncome = taxCalc.grossIncome;
+
+  const deductions = [
+    {
+      category: 'Airbnb Expenses',
+      description: 'Property costs, utilities, cleaning, maintenance',
+      amount: taxCalc.airbnbDeductions
+    }
+  ];
+
+  tbody.innerHTML = deductions.map(item => {
+    const percentage = totalIncome > 0 ? ((item.amount / totalIncome) * 100).toFixed(1) : 0;
+    return `
+      <tr>
+        <td><strong>${item.category}</strong></td>
+        <td style="color: #94a3b8;">${item.description}</td>
+        <td class="variance-negative">${currency.format(item.amount)}</td>
+        <td>${percentage}%</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Add total row
+  tbody.innerHTML += `
+    <tr style="border-top: 2px solid rgba(148, 163, 184, 0.2); font-weight: 600;">
+      <td><strong>Total Deductions</strong></td>
+      <td></td>
+      <td class="variance-negative">${currency.format(taxCalc.deductions)}</td>
+      <td>${totalIncome > 0 ? ((taxCalc.deductions / totalIncome) * 100).toFixed(1) : 0}%</td>
+    </tr>
+  `;
+}
+
+function renderQuarterlyPAYG(taxCalc) {
+  const quarterlyAmount = taxCalc.totalTax / 4;
+  
+  ['q1', 'q2', 'q3', 'q4'].forEach(quarter => {
+    const element = document.getElementById(`payg-${quarter}`);
+    if (element) {
+      element.textContent = currency.format(quarterlyAmount);
+    }
+  });
+}
+
+function generateTaxOptimizationTips(taxCalc) {
+  const tips = [];
+  const marginalRate = taxCalc.marginalRate;
+
+  // Tip based on marginal rate
+  if (marginalRate >= 37) {
+    tips.push({
+      priority: 'high',
+      title: 'High Tax Bracket - Consider Salary Sacrificing',
+      description: `You're in the ${marginalRate}% marginal tax bracket. Consider salary sacrificing into superannuation to reduce taxable income. Every $1 sacrificed saves you ${(marginalRate / 100).toFixed(2)} cents in tax.`,
+      savings: Math.round(taxCalc.taxableIncome * 0.05 * (marginalRate / 100))
+    });
+  }
+
+  // Deductions tip
+  if (taxCalc.deductions > 0) {
+    tips.push({
+      priority: 'medium',
+      title: 'Maximize Your Airbnb Deductions',
+      description: `You're claiming ${currency.format(taxCalc.airbnbDeductions)} in Airbnb deductions. Ensure you're capturing all eligible expenses including depreciation, insurance, council rates, and interest on loans.`,
+      savings: null
+    });
+  }
+
+  // Superannuation tip
+  if (taxCalc.grossIncome > 37000) {
+    const maxConcessional = 30000;
+    const potentialContribution = Math.min(10000, maxConcessional);
+    const taxSaving = potentialContribution * (marginalRate / 100) - potentialContribution * 0.15;
+    
+    tips.push({
+      priority: 'high',
+      title: 'Boost Your Super, Reduce Your Tax',
+      description: `Contributing ${currency.format(potentialContribution)} to super could save you approximately ${currency.format(taxSaving)} in tax (${marginalRate}% vs 15% tax rate).`,
+      savings: Math.round(taxSaving)
+    });
+  }
+
+  // Work from home deduction
+  tips.push({
+    priority: 'medium',
+    title: 'Claim Work From Home Expenses',
+    description: 'If you work from home, you can claim expenses using the revised fixed rate method (67 cents per hour) or actual cost method. Keep records of hours worked from home.',
+    savings: null
+  });
+
+  // Tax planning tip
+  if (new Date().getMonth() >= 3) { // After March
+    tips.push({
+      priority: 'medium',
+      title: 'End of Financial Year Planning',
+      description: 'Before June 30, consider prepaying deductible expenses, making charitable donations, and reviewing your super contributions to maximize tax benefits.',
+      savings: null
+    });
+  }
+
+  // Private health insurance
+  if (taxCalc.grossIncome > 90000) {
+    tips.push({
+      priority: 'high',
+      title: 'Private Health Insurance Rebate',
+      description: 'Your income may trigger the Medicare Levy Surcharge (up to 1.5%). Consider private health insurance to avoid this additional charge.',
+      savings: Math.round(taxCalc.taxableIncome * 0.015)
+    });
+  }
+
+  return tips;
+}
+
+function renderTaxOptimizationTips(tips) {
+  const container = document.getElementById('taxOptimizationTips');
+  
+  if (tips.length === 0) {
+    container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;">No optimization tips available at this time.</div>';
+    return;
+  }
+
+  container.innerHTML = tips.map(tip => {
+    const priorityClass = tip.priority === 'high' ? 'priority-high' : '';
+    const savingsText = tip.savings ? `<div class="savings-amount">Potential savings: <strong>${currency.format(tip.savings)}</strong></div>` : '';
+    
+    return `
+      <div class="opportunity-card ${priorityClass}">
+        <div class="opportunity-header">
+          <span class="priority-badge ${tip.priority}">${tip.priority.toUpperCase()}</span>
+          <h3>${tip.title}</h3>
+        </div>
+        <p class="opportunity-description">${tip.description}</p>
+        ${savingsText}
+      </div>
+    `;
+  }).join('');
+}
+
+function initTaxCalculator(data) {
+  const taxCalc = calculateTaxFromData(data);
+  
+  // Pre-fill calculator with current data
+  const grossIncomeInput = document.getElementById('taxCalcGrossIncome');
+  const deductionsInput = document.getElementById('taxCalcDeductions');
+  
+  if (grossIncomeInput) grossIncomeInput.value = Math.round(taxCalc.grossIncome);
+  if (deductionsInput) deductionsInput.value = Math.round(taxCalc.deductions);
+
+  // Calculate button handler
+  const calculateBtn = document.getElementById('runTaxCalc');
+  if (calculateBtn) {
+    calculateBtn.addEventListener('click', () => {
+      const grossIncome = parseFloat(grossIncomeInput.value) || 0;
+      const deductions = parseFloat(deductionsInput.value) || 0;
+      const medicareOption = document.getElementById('taxCalcMedicare').value;
+      
+      const taxableIncome = grossIncome - deductions;
+      const result = calculateAustralianTax(taxableIncome, medicareOption);
+
+      const resultDiv = document.getElementById('taxCalcResult');
+      resultDiv.innerHTML = `
+        <div style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 1.5rem; border-radius: 0.5rem; margin-top: 1rem;">
+          <h4 style="margin: 0 0 1rem 0; color: #4ade80;">Tax Calculation Results</h4>
+          <div style="display: grid; gap: 0.75rem;">
+            <div style="display: flex; justify-content: space-between;">
+              <span>Gross Income:</span>
+              <strong>${currency.format(grossIncome)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Less Deductions:</span>
+              <strong>${currency.format(deductions)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding-top: 0.75rem; border-top: 1px solid rgba(148, 163, 184, 0.2);">
+              <span>Taxable Income:</span>
+              <strong>${currency.format(taxableIncome)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.75rem;">
+              <span>Income Tax:</span>
+              <strong>${currency.format(result.incomeTax)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Medicare Levy:</span>
+              <strong>${currency.format(result.medicareLevy)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding-top: 0.75rem; border-top: 2px solid rgba(148, 163, 184, 0.3); font-size: 1.125rem;">
+              <span><strong>Total Tax Payable:</strong></span>
+              <strong style="color: #fb923c;">${currency.format(result.totalTax)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(148, 163, 184, 0.2);">
+              <span>Marginal Tax Rate:</span>
+              <strong>${result.marginalRate.toFixed(1)}%</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Effective Tax Rate:</span>
+              <strong>${result.effectiveRate.toFixed(1)}%</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(148, 163, 184, 0.2);">
+              <span>After-Tax Income:</span>
+              <strong style="color: #4ade80;">${currency.format(grossIncome - result.totalTax)}</strong>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  }
+}
+
+function initTaxDocumentChecklist() {
+  const checkboxes = [
+    'doc-payg', 'doc-bank', 'doc-dividend', 'doc-rental',
+    'doc-health', 'doc-donations', 'doc-work', 'doc-super', 'doc-previous'
+  ];
+
+  // Load saved state from localStorage
+  checkboxes.forEach(id => {
+    const checkbox = document.getElementById(id);
+    if (checkbox) {
+      const saved = localStorage.getItem(`tax_checklist_${id}`);
+      if (saved === 'true') {
+        checkbox.checked = true;
+      }
+
+      // Save state on change
+      checkbox.addEventListener('change', (e) => {
+        localStorage.setItem(`tax_checklist_${id}`, e.target.checked);
+      });
+    }
+  });
+}
+
+function exportTaxReport(taxCalc) {
+  const report = {
+    generated: new Date().toISOString(),
+    financialYear: '2024-25',
+    income: {
+      salary: taxCalc.salaryIncome,
+      airbnb: taxCalc.airbnbIncome,
+      other: taxCalc.otherIncome,
+      total: taxCalc.grossIncome
+    },
+    deductions: {
+      airbnbExpenses: taxCalc.airbnbDeductions,
+      total: taxCalc.deductions
+    },
+    tax: {
+      taxableIncome: taxCalc.taxableIncome,
+      incomeTax: taxCalc.incomeTax,
+      medicareLevy: taxCalc.medicareLevy,
+      totalTax: taxCalc.totalTax,
+      effectiveRate: taxCalc.effectiveRate,
+      marginalRate: taxCalc.marginalRate
+    },
+    quarterlyPAYG: taxCalc.totalTax / 4
+  };
+
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tax-report-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function initTaxHub(data) {
+  // Calculate tax from data
+  const taxCalc = calculateTaxFromData(data);
+
+  // Render all components
+  renderTaxSummaryCards(taxCalc);
+  renderIncomeBreakdown(taxCalc);
+  renderDeductionsTable(taxCalc);
+  renderQuarterlyPAYG(taxCalc);
+
+  // Generate and render optimization tips
+  const tips = generateTaxOptimizationTips(taxCalc);
+  renderTaxOptimizationTips(tips);
+
+  // Initialize tax calculator
+  initTaxCalculator(data);
+
+  // Initialize document checklist
+  initTaxDocumentChecklist();
+
+  // Calculate Tax button (refresh)
+  const calculateBtn = document.getElementById('calculateTax');
+  if (calculateBtn) {
+    calculateBtn.addEventListener('click', () => {
+      const updatedCalc = calculateTaxFromData(data);
+      renderTaxSummaryCards(updatedCalc);
+      renderIncomeBreakdown(updatedCalc);
+      renderDeductionsTable(updatedCalc);
+      renderQuarterlyPAYG(updatedCalc);
+      const updatedTips = generateTaxOptimizationTips(updatedCalc);
+      renderTaxOptimizationTips(updatedTips);
+    });
+  }
+
+  // Export Tax Report button
+  const exportBtn = document.getElementById('exportTaxReport');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      exportTaxReport(taxCalc);
+    });
   }
 }
 

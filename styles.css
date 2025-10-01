@@ -1606,3 +1606,65 @@ input[type="range"] {
     page-break-inside: avoid;
   }
 }
+
+/* ==================== Tax Hub Styles ==================== */
+
+.tax-brackets-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(56, 189, 248, 0.05);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+}
+
+.tax-bracket-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--card);
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.tax-bracket-item:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: var(--accent);
+  transform: translateX(4px);
+}
+
+.tax-bracket-item strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.priority-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.priority-badge.high {
+  background: rgba(251, 146, 60, 0.2);
+  color: #fb923c;
+  border: 1px solid rgba(251, 146, 60, 0.4);
+}
+
+.priority-badge.medium {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--accent);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.priority-badge.low {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--muted);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
