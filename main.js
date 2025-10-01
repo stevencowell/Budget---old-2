@@ -121,7 +121,7 @@ function initNavigation() {
     button.addEventListener('click', () => {
       const viewId = button.getAttribute('data-view');
       
-      // Skip if this is a special button without data-view attribute
+      // Skip if this is a special button without data-view attribute (e.g., superannuation button)
       if (!viewId) return;
       
       navButtons.forEach(btn => btn.classList.remove('active'));
@@ -135,7 +135,10 @@ function initNavigation() {
   // Add handler for Superannuation Tracker button
   const superBtn = document.getElementById('superannuationAppBtn');
   if (superBtn) {
-    superBtn.addEventListener('click', () => {
+    superBtn.addEventListener('click', (e) => {
+      // Prevent the default nav-btn behavior
+      e.stopPropagation();
+      
       // Open the React superannuation app
       // In development, the React app runs on port 3000
       // In production, it's deployed to GitHub Pages at Budget---old-2 repository
