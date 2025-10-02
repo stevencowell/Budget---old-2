@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { INVESTMENT_DEFAULTS } from '../constants/financialConstants';
 
 function ProjectionCalculator() {
   const [inputs, setInputs] = useState({
     currentBalance: '',
     annualContribution: '',
-    returnRate: '7',
+    returnRate: String(INVESTMENT_DEFAULTS.RETURN_RATE),
     yearsToRetirement: ''
   });
 

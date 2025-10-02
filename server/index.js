@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
+const { TAX_RATES, TIME_PERIODS, getMinimumDrawdownPercentage } = require('./constants/financialConstants');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -11,11 +12,11 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Superannuation calculation utilities
-const calculateCompoundInterest = (principal, rate, years, contributions, contributionFrequency = 12) => {
-  const monthlyRate = rate / 100 / 12;
-  const months = years * 12;
+const calculateCompoundInterest = (principal, rate, years, contributions, contributionFrequency = TIME_PERIODS.MONTHS_PER_YEAR) => {
+  const monthlyRate = rate / 100 / TIME_PERIODS.MONTHS_PER_YEAR;
+  const months = years * TIME_PERIODS.MONTHS_PER_YEAR;
   let balance = principal;
-  const monthlyContribution = contributions / contributionFrequency * 12;
+  const monthlyContribution = contributions / contributionFrequency * TIME_PERIODS.MONTHS_PER_YEAR;
   
   const projections = [];
   
@@ -24,9 +25,9 @@ const calculateCompoundInterest = (principal, rate, years, contributions, contri
       balance = balance * (1 + monthlyRate) + monthlyContribution;
     }
     
-    if (month % 12 === 0) {
+    if (month % TIME_PERIODS.MONTHS_PER_YEAR === 0) {
       projections.push({
-        year: month / 12,
+        year: month / TIME_PERIODS.MONTHS_PER_YEAR,
         balance: Math.round(balance * 100) / 100,
         contributions: Math.round((monthlyContribution * month) * 100) / 100,
         interest: Math.round((balance - principal - (monthlyContribution * month)) * 100) / 100
@@ -39,7 +40,7 @@ const calculateCompoundInterest = (principal, rate, years, contributions, contri
 
 const calculateRetirementIncome = (balance, withdrawalRate, years) => {
   const annualWithdrawal = balance * (withdrawalRate / 100);
-  const monthlyIncome = annualWithdrawal / 12;
+  const monthlyIncome = annualWithdrawal / TIME_PERIODS.MONTHS_PER_YEAR;
   
   return {
     annualIncome: Math.round(annualWithdrawal * 100) / 100,
@@ -50,7 +51,7 @@ const calculateRetirementIncome = (balance, withdrawalRate, years) => {
 
 const calculateTaxBenefit = (contributions, taxRate) => {
   // Concessional contributions are taxed at 15% instead of marginal rate
-  const superTaxRate = 15;
+  const superTaxRate = TAX_RATES.SUPER_CONTRIBUTIONS;
   const taxSaved = contributions * ((taxRate - superTaxRate) / 100);
   
   return {
@@ -60,15 +61,7 @@ const calculateTaxBenefit = (contributions, taxRate) => {
 };
 
 const calculateMinimumDrawdown = (age, balance) => {
-  let percentage;
-  
-  if (age < 65) percentage = 4;
-  else if (age < 75) percentage = 5;
-  else if (age < 80) percentage = 6;
-  else if (age < 85) percentage = 7;
-  else if (age < 90) percentage = 9;
-  else if (age < 95) percentage = 11;
-  else percentage = 14;
+  const percentage = getMinimumDrawdownPercentage(age);
   
   return {
     percentage,

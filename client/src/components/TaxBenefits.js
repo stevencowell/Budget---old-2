@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import {
+  TAX_RATES,
+  CONTRIBUTION_CAPS
+} from '../constants/financialConstants';
 
 function TaxBenefits() {
   const [inputs, setInputs] = useState({
@@ -96,11 +100,11 @@ function TaxBenefits() {
             </div>
             <div className="result-item">
               <span className="result-label">Superannuation Tax Rate:</span>
-              <span className="result-value">15%</span>
+              <span className="result-value">{TAX_RATES.SUPER_CONTRIBUTIONS_PERCENTAGE}%</span>
             </div>
             <div className="result-item">
               <span className="result-label">Tax Rate Difference:</span>
-              <span className="result-value">{inputs.taxRate - 15}%</span>
+              <span className="result-value">{inputs.taxRate - TAX_RATES.SUPER_CONTRIBUTIONS_PERCENTAGE}%</span>
             </div>
             <div className="result-item">
               <span className="result-label">Annual Tax Saved:</span>
@@ -122,11 +126,11 @@ function TaxBenefits() {
 
       <div className="info-box">
         <h3>Key Points About Concessional Contributions</h3>
-        <p>• Concessional contributions are taxed at 15% in your super fund (instead of your marginal rate)</p>
-        <p>• The concessional contribution cap is $27,500 per year (2025)</p>
+        <p>• Concessional contributions are taxed at {TAX_RATES.SUPER_CONTRIBUTIONS_PERCENTAGE}% in your super fund (instead of your marginal rate)</p>
+        <p>• The concessional contribution cap is ${CONTRIBUTION_CAPS.CONCESSIONAL.toLocaleString()} per year (2025)</p>
         <p>• Includes employer contributions and salary sacrifice amounts</p>
         <p>• Excess contributions are taxed at your marginal rate plus an excess concessional contributions charge</p>
-        <p>• Those with income over $250,000 pay an additional 15% Division 293 tax on contributions</p>
+        <p>• Those with income over ${TAX_RATES.DIVISION_293_THRESHOLD.toLocaleString()} pay an additional {TAX_RATES.DIVISION_293_ADDITIONAL_TAX * 100}% Division 293 tax on contributions</p>
       </div>
     </div>
   );
