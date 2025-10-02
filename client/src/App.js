@@ -94,7 +94,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>© 2025 Superannuation Tracker - For informational purposes only. Consult a financial advisor for personalized advice.</p>
+        <p>© 2025 Superannuation Tracker - For informational purposes only. Consult a financial adviser for personalised advice.</p>
       </footer>
     </div>
   );
