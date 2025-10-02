@@ -10,11 +10,30 @@ import RetirementPlanner from './components/RetirementPlanner';
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  const handleBackToFinance = () => {
+    // Check if we're in a popup/new tab and can close it
+    if (window.opener) {
+      window.close();
+    } else {
+      // If we can't close (user navigated directly), try to go back to the finance app
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const financeAppUrl = isLocal ? 'http://localhost:5000' : window.location.origin;
+      window.location.href = financeAppUrl;
+    }
+  };
+
   return (
     <div className="App">
       <header className="app-header">
-        <h1>🏦 Superannuation Tracker</h1>
-        <p>Track and project your retirement savings</p>
+        <div className="header-content">
+          <div>
+            <h1>🏦 Superannuation Tracker</h1>
+            <p>Track and project your retirement savings</p>
+          </div>
+          <button className="back-button" onClick={handleBackToFinance} title="Back to Finance App">
+            ← Back to Finance
+          </button>
+        </div>
       </header>
 
       <nav className="nav-tabs">
