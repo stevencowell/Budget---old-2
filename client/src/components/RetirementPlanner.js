@@ -5,7 +5,6 @@ import {
   TIME_PERIODS,
   INVESTMENT_DEFAULTS,
   AGE_THRESHOLDS,
-  calculateDailySalary,
   calculatePartTimeRatio,
   calculateLSLSuperContribution,
   calculateNetReturnRate
@@ -91,9 +90,6 @@ function RetirementPlanner() {
     
     let balance = currentBalance;
     const projections = [];
-    
-    // Calculate daily salary for long service leave
-    const dailySalary = calculateDailySalary(annualSalary);
     
     for (let year = 0; year <= yearsToRetirement; year++) {
       const age = currentAge + year;

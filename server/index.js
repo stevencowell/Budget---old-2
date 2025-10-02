@@ -16,7 +16,7 @@ const calculateCompoundInterest = (principal, rate, years, contributions, contri
   const monthlyRate = rate / 100 / TIME_PERIODS.MONTHS_PER_YEAR;
   const months = years * TIME_PERIODS.MONTHS_PER_YEAR;
   let balance = principal;
-  const monthlyContribution = contributions / contributionFrequency * TIME_PERIODS.MONTHS_PER_YEAR;
+  const monthlyContribution = contributions / TIME_PERIODS.MONTHS_PER_YEAR;
   
   const projections = [];
   
