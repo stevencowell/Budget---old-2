@@ -888,8 +888,10 @@ function initBudgetTable(items) {
 
   let nextId = 0;
   const savedItems = storage.getBudgetItems();
+  // Filter out summary rows (Total, Cash Flow) from the budget items
+  const filteredItems = (savedItems || items).filter(item => item.item !== 'Total' && item.item !== 'Cash Flow');
   const state = {
-    items: (savedItems || items).map((item) => recalcBudgetItem({ ...item, id: String(nextId++) })),
+    items: filteredItems.map((item) => recalcBudgetItem({ ...item, id: String(nextId++) })),
     originalItems: items
   };
 
@@ -902,6 +904,10 @@ function initBudgetTable(items) {
       let sum = 0;
       let hasValue = false;
       state.items.forEach((item) => {
+        // Exclude summary rows from totals calculation
+        if (item.item === 'Total' || item.item === 'Cash Flow') {
+          return;
+        }
         const value = item[field];
         if (typeof value === 'number' && Number.isFinite(value)) {
           sum += value;
