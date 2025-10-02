@@ -119,8 +119,8 @@ class StorageManager {
   }
 
   /**
-   * Clear all app data from localStorage
-   * This includes: budget items, scenarios, category changes, subcategory rules, and tax checklist
+   * Clear all app data from localStorage AND session data
+   * This includes: budget items, scenarios, category changes, subcategory rules, tax checklist, and loaded data
    */
   clearAllAppData() {
     try {
@@ -135,6 +135,17 @@ class StorageManager {
       
       // Remove all identified keys
       keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // Also clear any session storage
+      try {
+        sessionStorage.clear();
+      } catch (e) {
+        console.warn('Could not clear session storage:', e);
+      }
+      
+      // Clear any cached data in memory by setting a flag
+      // This will be checked on reload to prevent loading financial data
+      localStorage.setItem('cowell_budget_data_cleared', 'true');
       
       return true;
     } catch (error) {
@@ -2632,8 +2643,9 @@ function initDataManagement(data) {
       const keysToRemove = storage.getAllStoredKeys();
       
       // Create detailed confirmation message
-      const message = `⚠️ WARNING: This will permanently delete ALL saved data from this app, including:
+      const message = `⚠️ WARNING: This will clear ALL visible financial data and customizations, including:
 
+• All displayed transactions and financial information
 • Budget customizations and saved items
 • Financial planning scenarios
 • Category changes and subcategory rules
@@ -2642,19 +2654,24 @@ function initDataManagement(data) {
 
 ${keysToRemove.length > 0 ? `\nYou have ${keysToRemove.length} saved item(s) that will be deleted.` : '\nNo saved data found.'}
 
-This will reset the app to its original state, making it fresh for sharing with others.
+After clearing:
+✓ The app will show a blank/empty state
+✓ You can restore data by importing a backup file
+✓ You can reload financial data from the server at any time
+
+This is perfect for sharing the app with others or starting fresh.
 
 Are you ABSOLUTELY SURE you want to proceed?
 
-Tip: Consider exporting your data first using the "Export Data" button.`;
+💡 TIP: Export your data first using the "Export Data" button to create a backup!`;
 
       if (confirm(message)) {
         // Double confirmation for safety
-        if (confirm('FINAL CONFIRMATION: Click OK to permanently delete all data, or Cancel to keep your data safe.')) {
+        if (confirm('FINAL CONFIRMATION: Click OK to clear all data and show blank state, or Cancel to keep your data.')) {
           const success = storage.clearAllAppData();
           
           if (success) {
-            alert('✅ All data has been cleared successfully!\n\nThe app will now reload with a fresh state.');
+            alert('✅ All data has been cleared successfully!\n\nThe app will now reload showing a blank state.\n\nYou can restore your data by:\n• Importing your backup file, or\n• Clicking "Load Financial Data" from the banner');
             window.location.reload();
           } else {
             alert('❌ There was an error clearing the data. Please try again or check the browser console for details.');
@@ -3931,11 +3948,159 @@ function initCategoryTrends(transactions, monthlyCashflow) {
   });
 }
 
+// ==================== Blank Data Helper ====================
+
+/**
+ * Shows a banner informing users that data has been cleared
+ */
+function showDataClearedBanner() {
+  const banner = document.createElement('div');
+  banner.id = 'dataClearedBanner';
+  banner.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    font-size: 14px;
+  `;
+  
+  banner.innerHTML = `
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+      <div style="flex: 1; text-align: left;">
+        <strong>✅ All data has been cleared!</strong> 
+        <span style="opacity: 0.9;">You're now viewing a blank state. Import your backup file to restore your data, or start fresh.</span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="restoreDataMode()" style="
+          background: white;
+          color: #667eea;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 13px;
+        ">🔄 Load Financial Data</button>
+        <button onclick="dismissDataClearedBanner()" style="
+          background: rgba(255,255,255,0.2);
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 13px;
+        ">Dismiss</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertBefore(banner, document.body.firstChild);
+  
+  // Adjust main content padding to account for banner
+  const header = document.querySelector('.app-header');
+  if (header) {
+    header.style.marginTop = '60px';
+  }
+}
+
+/**
+ * Dismisses the data cleared banner
+ */
+function dismissDataClearedBanner() {
+  const banner = document.getElementById('dataClearedBanner');
+  if (banner) {
+    banner.remove();
+  }
+  
+  const header = document.querySelector('.app-header');
+  if (header) {
+    header.style.marginTop = '0';
+  }
+}
+
+/**
+ * Restores normal data mode by removing the cleared flag
+ */
+function restoreDataMode() {
+  if (confirm('This will reload the page and load your financial data from the server. Continue?')) {
+    localStorage.removeItem('cowell_budget_data_cleared');
+    window.location.reload();
+  }
+}
+
+/**
+ * Returns a blank data structure for when all data has been cleared
+ */
+function getBlankData() {
+  const currentDate = new Date().toISOString();
+  return {
+    generated_at: currentDate,
+    metrics: {
+      total_income: 0,
+      total_expense: 0,
+      net_position: 0,
+      savings_rate: 0,
+      average_monthly_net: 0,
+      essential_annual: 0,
+      discretionary_annual: 0
+    },
+    category_summary: [],
+    monthly_cashflow: [],
+    recent_transactions: [],
+    top_merchants: [],
+    top_income_sources: [],
+    budget_summary: [],
+    airbnb_summary: {
+      income: 0,
+      expenses: 0,
+      net: 0,
+      occupancy_rate: 0,
+      avg_nightly_rate: 0,
+      transaction_count: 0
+    },
+    tax_data: {
+      gross_income: 0,
+      deductions: 0,
+      taxable_income: 0,
+      estimated_tax: 0,
+      total_income: 0,
+      salary: 0,
+      airbnb_income: 0,
+      other_income: 0,
+      airbnb_expenses: 0,
+      total_deductions: 0
+    },
+    calc_defaults: {
+      fortnightly_surplus: 0,
+      target_savings: 0,
+      timeline_weeks: 0
+    }
+  };
+}
+
 // ==================== Main Initialization ====================
 
 async function init() {
   try {
-    const data = await loadData();
+    // Check if data was cleared
+    const dataCleared = localStorage.getItem('cowell_budget_data_cleared');
+    
+    let data;
+    if (dataCleared === 'true') {
+      // Use blank/demo data instead of loading real financial data
+      data = getBlankData();
+      showDataClearedBanner();
+    } else {
+      // Load real financial data
+      data = await loadData();
+    }
+    
     updateGeneratedTime(data.generated_at);
     
     // Initialize navigation
