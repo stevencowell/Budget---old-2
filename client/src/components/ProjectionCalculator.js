@@ -1,18 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { INVESTMENT_DEFAULTS } from '../constants/financialConstants';
+import { saveData, loadData, STORAGE_KEYS } from '../utils/dataStorage';
 
 function ProjectionCalculator() {
-  const [inputs, setInputs] = useState({
-    currentBalance: '',
-    annualContribution: '',
-    returnRate: String(INVESTMENT_DEFAULTS.RETURN_RATE),
-    yearsToRetirement: ''
+  const [inputs, setInputs] = useState(() => {
+    // Load saved inputs on initial render
+    return loadData(STORAGE_KEYS.PROJECTION_CALCULATOR, {
+      currentBalance: '',
+      annualContribution: '',
+      returnRate: String(INVESTMENT_DEFAULTS.RETURN_RATE),
+      yearsToRetirement: ''
+    });
   });
 
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Save inputs whenever they change
+  useEffect(() => {
+    saveData(STORAGE_KEYS.PROJECTION_CALCULATOR, inputs);
+  }, [inputs]);
 
   const handleChange = (e) => {
     setInputs({ ...inputs, [e.target.name]: e.target.value });

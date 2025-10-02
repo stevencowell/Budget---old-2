@@ -1,19 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   MINIMUM_DRAWDOWN_RATES,
   TIME_PERIODS,
   AGE_THRESHOLDS
 } from '../constants/financialConstants';
+import { saveData, loadData, STORAGE_KEYS } from '../utils/dataStorage';
 
 function MinimumDrawdown() {
-  const [inputs, setInputs] = useState({
-    age: '',
-    balance: ''
+  const [inputs, setInputs] = useState(() => {
+    // Load saved inputs on initial render
+    return loadData(STORAGE_KEYS.MINIMUM_DRAWDOWN, {
+      age: '',
+      balance: ''
+    });
   });
 
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Save inputs whenever they change
+  useEffect(() => {
+    saveData(STORAGE_KEYS.MINIMUM_DRAWDOWN, inputs);
+  }, [inputs]);
 
   const handleChange = (e) => {
     setInputs({ ...inputs, [e.target.name]: e.target.value });

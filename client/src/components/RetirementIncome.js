@@ -1,19 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   RETIREMENT_INCOME,
   TIME_PERIODS
 } from '../constants/financialConstants';
+import { saveData, loadData, STORAGE_KEYS } from '../utils/dataStorage';
 
 function RetirementIncome() {
-  const [inputs, setInputs] = useState({
-    balance: '',
-    withdrawalRate: String(RETIREMENT_INCOME.FOUR_PERCENT_RULE * 100),
-    years: String(RETIREMENT_INCOME.STANDARD_DURATION_YEARS)
+  const [inputs, setInputs] = useState(() => {
+    // Load saved inputs on initial render
+    return loadData(STORAGE_KEYS.RETIREMENT_INCOME, {
+      balance: '',
+      withdrawalRate: String(RETIREMENT_INCOME.FOUR_PERCENT_RULE * 100),
+      years: String(RETIREMENT_INCOME.STANDARD_DURATION_YEARS)
+    });
   });
 
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Save inputs whenever they change
+  useEffect(() => {
+    saveData(STORAGE_KEYS.RETIREMENT_INCOME, inputs);
+  }, [inputs]);
 
   const handleChange = (e) => {
     setInputs({ ...inputs, [e.target.name]: e.target.value });
