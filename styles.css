@@ -289,6 +289,32 @@ canvas {
   background: rgba(56, 189, 248, 0.08);
 }
 
+.budget-row-clickable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.budget-row-clickable:hover {
+  background: rgba(56, 189, 248, 0.15) !important;
+}
+
+.budget-actual-clickable {
+  position: relative;
+  font-weight: 500;
+}
+
+.budget-actual-clickable::after {
+  content: '🔍';
+  margin-left: 0.5rem;
+  opacity: 0;
+  font-size: 0.85em;
+  transition: opacity 0.2s ease;
+}
+
+.budget-row-clickable:hover .budget-actual-clickable::after {
+  opacity: 0.7;
+}
+
 .data-table tfoot th,
 .data-table tfoot td {
   padding: 0.75rem;

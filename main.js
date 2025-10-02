@@ -932,11 +932,11 @@ function initBudgetTable(items) {
         const variance = formatVariance(item.variance);
         const percent = item.percentOfBudget || '—';
         return `
-          <tr data-id="${item.id}">
+          <tr data-id="${item.id}" class="budget-row-clickable" data-category="${item.group}" data-subcategory="${item.item}">
             <td>${item.group}</td>
             <td>${item.item}</td>
             <td>${budget}</td>
-            <td>${actual}</td>
+            <td class="budget-actual-clickable" title="Click to view transactions">${actual}</td>
             <td>${variance}</td>
             <td>${percent}</td>
             <td class="actions-cell">
@@ -1076,6 +1076,34 @@ function initBudgetTable(items) {
 
   draw();
   tbody.addEventListener('click', handleAction);
+
+  // Add click handler for viewing transactions
+  tbody.addEventListener('click', (e) => {
+    // Check if clicking on the actual amount cell or anywhere on the row (except action buttons)
+    const clickedButton = e.target.closest('button[data-action]');
+    if (clickedButton) return; // Don't trigger if clicking action buttons
+    
+    const row = e.target.closest('tr.budget-row-clickable');
+    if (!row) return;
+    
+    const category = row.dataset.category;
+    const subcategory = row.dataset.subcategory;
+    
+    if (!category) return;
+    
+    // Navigate to transactions view
+    const transactionsNavBtn = document.querySelector('.nav-btn[data-view="transactions"]');
+    if (transactionsNavBtn) {
+      transactionsNavBtn.click();
+      
+      // Apply filters after a short delay to ensure the view is rendered
+      setTimeout(() => {
+        if (window.applyBudgetItemFilter) {
+          window.applyBudgetItemFilter(category, subcategory);
+        }
+      }, 100);
+    }
+  });
 
   const addBtn = document.getElementById('addBudgetItem');
   if (addBtn) addBtn.addEventListener('click', handleAddItem);
@@ -1857,6 +1885,39 @@ function renderTransactions(transactions) {
 
   refreshFilterOptions();
   draw();
+
+  // Expose function to filter by budget item (category + subcategory)
+  window.applyBudgetItemFilter = function(budgetCategory, budgetSubcategory) {
+    // Map budget item names to transaction categories/subcategories
+    // Budget uses "group" (e.g., "Groceries & Dining") which maps to transaction "category"
+    // Budget uses "item" (e.g., "Groceries") which maps to transaction "subcategory"
+    
+    // Clear existing filters first
+    state.filters = { search: '', category: 'all', type: 'all', dateFrom: '', dateTo: '' };
+    searchInput.value = '';
+    typeSelect.value = 'all';
+    dateFromInput.value = '';
+    dateToInput.value = '';
+    
+    // Try to find matching category in the category dropdown
+    const matchingOption = Array.from(categorySelect.options).find(
+      opt => opt.value.toLowerCase() === budgetCategory.toLowerCase()
+    );
+    
+    if (matchingOption) {
+      state.filters.category = matchingOption.value;
+      categorySelect.value = matchingOption.value;
+    }
+    
+    // If we have a specific subcategory, use search to filter by it
+    if (budgetSubcategory && budgetSubcategory !== '—') {
+      state.filters.search = budgetSubcategory;
+      searchInput.value = budgetSubcategory;
+    }
+    
+    state.currentPage = 1;
+    draw();
+  };
 }
 
 // ==================== Category Manager ====================
