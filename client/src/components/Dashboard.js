@@ -1,18 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CONTRIBUTION_CAPS,
   SUPER_RATES,
   AGE_THRESHOLDS,
   TIME_PERIODS
 } from '../constants/financialConstants';
+import { saveData, loadData, STORAGE_KEYS } from '../utils/dataStorage';
 
 function Dashboard() {
-  const [profile, setProfile] = useState({
-    currentBalance: '',
-    age: '',
-    retirementAge: '',
-    annualContribution: ''
+  const [profile, setProfile] = useState(() => {
+    // Load saved profile on initial render
+    return loadData(STORAGE_KEYS.DASHBOARD_PROFILE, {
+      currentBalance: '',
+      age: '',
+      retirementAge: '',
+      annualContribution: ''
+    });
   });
+
+  // Save profile data whenever it changes
+  useEffect(() => {
+    saveData(STORAGE_KEYS.DASHBOARD_PROFILE, profile);
+  }, [profile]);
 
   const handleChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
@@ -90,7 +99,8 @@ function Dashboard() {
             }}
             onClick={() => {
               if (profile.currentBalance && profile.age && profile.retirementAge) {
-                alert('Profile saved! Your details have been recorded. Use the tabs above to explore different calculators.');
+                saveData(STORAGE_KEYS.DASHBOARD_PROFILE, profile);
+                alert('Profile saved! Your details have been automatically saved and will persist between sessions. Use the tabs above to explore different calculators.');
               } else {
                 alert('Please fill in all required fields (Current Age, Planned Retirement Age, and Current Balance)');
               }

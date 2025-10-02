@@ -1,18 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   TAX_RATES,
   CONTRIBUTION_CAPS
 } from '../constants/financialConstants';
+import { saveData, loadData, STORAGE_KEYS } from '../utils/dataStorage';
 
 function TaxBenefits() {
-  const [inputs, setInputs] = useState({
-    contributions: '',
-    taxRate: ''
+  const [inputs, setInputs] = useState(() => {
+    // Load saved inputs on initial render
+    return loadData(STORAGE_KEYS.TAX_BENEFITS, {
+      contributions: '',
+      taxRate: ''
+    });
   });
 
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Save inputs whenever they change
+  useEffect(() => {
+    saveData(STORAGE_KEYS.TAX_BENEFITS, inputs);
+  }, [inputs]);
 
   const handleChange = (e) => {
     setInputs({ ...inputs, [e.target.name]: e.target.value });

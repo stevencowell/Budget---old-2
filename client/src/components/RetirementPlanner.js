@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import {
   SUPER_RATES,
@@ -10,6 +10,7 @@ import {
   calculateLSLSuperContribution,
   calculateNetReturnRate
 } from '../constants/financialConstants';
+import { saveData, loadData, STORAGE_KEYS } from '../utils/dataStorage';
 
 function RetirementPlanner() {
   // Personal details
@@ -19,36 +20,52 @@ function RetirementPlanner() {
   const anneDOB = '10-04-1970';
   
   // Initial state with superannuation balances from tax returns
-  const [inputs, setInputs] = useState({
-    // Steve's details
-    steveCurrentBalance: 250000, // Placeholder - update from tax return
-    steveFortnightlyContribution: 500,
-    steveCurrentSalary: 85000,
-    steveLongServiceDays: 0,
-    stevePartTimeStartAge: 60,
-    stevePartTimeDays: 5, // days per week
-    
-    // Anne's details
-    anneCurrentBalance: 220000, // Placeholder - update from tax return
-    anneFortnightlyContribution: 500,
-    anneCurrentSalary: 80000,
-    anneLongServiceDays: 0,
-    annePartTimeStartAge: 60,
-    annePartTimeDays: 5, // days per week
-    
-    // Investment assumptions
-    returnRate: INVESTMENT_DEFAULTS.RETURN_RATE, // Annual return %
-    inflationRate: INVESTMENT_DEFAULTS.INFLATION_RATE, // Annual inflation %
-    adminFees: INVESTMENT_DEFAULTS.ADMIN_FEES, // Annual admin fees %
-    
-    // Retirement assumptions
-    retirementAge: AGE_THRESHOLDS.STANDARD_RETIREMENT,
-    lifeExpectancy: AGE_THRESHOLDS.DEFAULT_LIFE_EXPECTANCY,
-    desiredAnnualIncome: 80000, // Combined household income in retirement
+  const [inputs, setInputs] = useState(() => {
+    // Load saved inputs on initial render
+    return loadData(STORAGE_KEYS.RETIREMENT_PLANNER, {
+      // Steve's details
+      steveCurrentBalance: 250000, // Placeholder - update from tax return
+      steveFortnightlyContribution: 500,
+      steveCurrentSalary: 85000,
+      steveLongServiceDays: 0,
+      stevePartTimeStartAge: 60,
+      stevePartTimeDays: 5, // days per week
+      
+      // Anne's details
+      anneCurrentBalance: 220000, // Placeholder - update from tax return
+      anneFortnightlyContribution: 500,
+      anneCurrentSalary: 80000,
+      anneLongServiceDays: 0,
+      annePartTimeStartAge: 60,
+      annePartTimeDays: 5, // days per week
+      
+      // Investment assumptions
+      returnRate: INVESTMENT_DEFAULTS.RETURN_RATE, // Annual return %
+      inflationRate: INVESTMENT_DEFAULTS.INFLATION_RATE, // Annual inflation %
+      adminFees: INVESTMENT_DEFAULTS.ADMIN_FEES, // Annual admin fees %
+      
+      // Retirement assumptions
+      retirementAge: AGE_THRESHOLDS.STANDARD_RETIREMENT,
+      lifeExpectancy: AGE_THRESHOLDS.DEFAULT_LIFE_EXPECTANCY,
+      desiredAnnualIncome: 80000, // Combined household income in retirement
+    });
   });
 
-  const [scenarios, setScenarios] = useState([]);
+  const [scenarios, setScenarios] = useState(() => {
+    // Load saved scenarios on initial render
+    return loadData(STORAGE_KEYS.RETIREMENT_SCENARIOS, []);
+  });
   const [showComparison, setShowComparison] = useState(false);
+
+  // Save inputs whenever they change
+  useEffect(() => {
+    saveData(STORAGE_KEYS.RETIREMENT_PLANNER, inputs);
+  }, [inputs]);
+
+  // Save scenarios whenever they change
+  useEffect(() => {
+    saveData(STORAGE_KEYS.RETIREMENT_SCENARIOS, scenarios);
+  }, [scenarios]);
 
   const handleChange = (e) => {
     const value = e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value;
@@ -184,8 +201,11 @@ function RetirementPlanner() {
   };
 
   const handleClearScenarios = () => {
-    setScenarios([]);
-    setShowComparison(false);
+    if (window.confirm('Are you sure you want to clear all saved scenarios? This cannot be undone.')) {
+      setScenarios([]);
+      setShowComparison(false);
+      saveData(STORAGE_KEYS.RETIREMENT_SCENARIOS, []);
+    }
   };
 
   const currentScenario = scenarios.length > 0 ? scenarios[scenarios.length - 1] : null;
