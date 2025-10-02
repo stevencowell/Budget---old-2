@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-  RETIREMENT_INCOME,
-  TIME_PERIODS
+  RETIREMENT_INCOME
 } from '../constants/financialConstants';
 import { saveData, loadData, STORAGE_KEYS } from '../utils/dataStorage';
 

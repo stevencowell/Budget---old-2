@@ -208,7 +208,7 @@ export const calculateLSLSuperContribution = (lslDays, annualSalary) => {
   return lslPay * SUPER_RATES.EMPLOYER_CONTRIBUTION_RATE;
 };
 
-export default {
+const financialConstants = {
   TAX_RATES,
   SUPER_RATES,
   CONTRIBUTION_CAPS,
@@ -225,3 +225,5 @@ export default {
   calculatePartTimeRatio,
   calculateLSLSuperContribution
 };
+
+export default financialConstants;
