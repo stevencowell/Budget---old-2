@@ -18,7 +18,7 @@ if (superBtn) {
   superBtn.addEventListener('click', () => {
     // Open the React superannuation app
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const superAppUrl = isLocal ? 'http://localhost:3000' : 'https://stevencowell.github.io/Budget---old-2/';
+    const superAppUrl = isLocal ? 'http://localhost:3000' : 'https://stevencowell.github.io/Budget---old-2/app/';
     window.open(superAppUrl, '_blank');
   });
 }
@@ -34,7 +34,7 @@ if (superBtn) {
     
     // Open the React superannuation app
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const superAppUrl = isLocal ? 'http://localhost:3000' : 'https://stevencowell.github.io/Budget---old-2/';
+    const superAppUrl = isLocal ? 'http://localhost:3000' : 'https://stevencowell.github.io/Budget---old-2/app/';
     window.open(superAppUrl, '_blank');
   });
 }
@@ -60,7 +60,7 @@ if (superBtn) {
 ### Production
 1. Visit the deployed Budget app
 2. Click "🏦 Superannuation Tracker"  
-3. The React app should open in a new tab at https://stevencowell.github.io/Budget---old-2/
+3. The React app should open in a new tab at https://stevencowell.github.io/Budget---old-2/app/
 
 ## Related Files
 - `/workspace/index.html` - Contains the button markup (line 33)

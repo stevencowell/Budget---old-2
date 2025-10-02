@@ -7,7 +7,7 @@
 
 1. ✅ **Fixed homepage URL** in `client/package.json`
    - Changed from: `/superannuation/app`
-   - Changed to: `https://stevencowell.github.io/Budget---old-2`
+   - Changed to: `https://stevencowell.github.io/Budget---old-2/app`
 
 2. ✅ **Installed dependencies**
    - Ran `npm install` in the client directory
@@ -25,7 +25,8 @@
 
 Your superannuation app should now be accessible at:
 
-**https://stevencowell.github.io/Budget---old-2/**
+- **Main Budget App:** https://stevencowell.github.io/Budget---old-2/
+- **Superannuation Tracker:** https://stevencowell.github.io/Budget---old-2/app/
 
 ## Important Notes
 
