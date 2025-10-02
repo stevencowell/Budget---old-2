@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import {
+  RETIREMENT_INCOME,
+  TIME_PERIODS
+} from '../constants/financialConstants';
 
 function RetirementIncome() {
   const [inputs, setInputs] = useState({
     balance: '',
-    withdrawalRate: '4',
-    years: '30'
+    withdrawalRate: String(RETIREMENT_INCOME.FOUR_PERCENT_RULE * 100),
+    years: String(RETIREMENT_INCOME.STANDARD_DURATION_YEARS)
   });
 
   const [results, setResults] = useState(null);
@@ -113,8 +117,8 @@ function RetirementIncome() {
           </div>
 
           <div className="info-box">
-            <h3>Understanding the 4% Rule</h3>
-            <p>The "4% rule" is a common retirement planning guideline suggesting you can withdraw 4% of your retirement savings annually, adjusted for inflation, with a high probability your money will last 30 years.</p>
+            <h3>Understanding the {RETIREMENT_INCOME.FOUR_PERCENT_RULE * 100}% Rule</h3>
+            <p>The "{RETIREMENT_INCOME.FOUR_PERCENT_RULE * 100}% rule" is a common retirement planning guideline suggesting you can withdraw {RETIREMENT_INCOME.FOUR_PERCENT_RULE * 100}% of your retirement savings annually, adjusted for inflation, with a high probability your money will last {RETIREMENT_INCOME.STANDARD_DURATION_YEARS} years.</p>
             <p style={{marginTop: '10px'}}><strong>Important:</strong> This calculation doesn't account for investment returns during retirement or inflation. Consider consulting a financial adviser for a comprehensive retirement plan.</p>
           </div>
         </>
@@ -122,9 +126,9 @@ function RetirementIncome() {
 
       <div className="info-box">
         <h3>Withdrawal Strategies</h3>
-        <p><strong>Conservative (3-3.5%):</strong> Lower withdrawal rate for longer retirement or market uncertainty</p>
-        <p><strong>Moderate (4-4.5%):</strong> Standard approach balancing income needs and sustainability</p>
-        <p><strong>Aggressive (5%+):</strong> Higher income but increased risk of depleting funds early</p>
+        <p><strong>Conservative ({RETIREMENT_INCOME.CONSERVATIVE_RATE * 100}%):</strong> Lower withdrawal rate for longer retirement or market uncertainty</p>
+        <p><strong>Moderate ({RETIREMENT_INCOME.MODERATE_RATE * 100}%):</strong> Standard approach balancing income needs and sustainability</p>
+        <p><strong>Aggressive ({RETIREMENT_INCOME.AGGRESSIVE_RATE * 100}%+):</strong> Higher income but increased risk of depleting funds early</p>
       </div>
     </div>
   );

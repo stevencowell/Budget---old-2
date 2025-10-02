@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import {
+  SUPER_RATES,
+  TIME_PERIODS,
+  INVESTMENT_DEFAULTS,
+  AGE_THRESHOLDS,
+  calculateDailySalary,
+  calculatePartTimeRatio,
+  calculateLSLSuperContribution,
+  calculateNetReturnRate
+} from '../constants/financialConstants';
 
 function RetirementPlanner() {
   // Personal details
@@ -27,13 +37,13 @@ function RetirementPlanner() {
     annePartTimeDays: 5, // days per week
     
     // Investment assumptions
-    returnRate: 7.0, // Annual return %
-    inflationRate: 2.5, // Annual inflation %
-    adminFees: 0.6, // Annual admin fees %
+    returnRate: INVESTMENT_DEFAULTS.RETURN_RATE, // Annual return %
+    inflationRate: INVESTMENT_DEFAULTS.INFLATION_RATE, // Annual inflation %
+    adminFees: INVESTMENT_DEFAULTS.ADMIN_FEES, // Annual admin fees %
     
     // Retirement assumptions
-    retirementAge: 60,
-    lifeExpectancy: 90,
+    retirementAge: AGE_THRESHOLDS.STANDARD_RETIREMENT,
+    lifeExpectancy: AGE_THRESHOLDS.DEFAULT_LIFE_EXPECTANCY,
     desiredAnnualIncome: 80000, // Combined household income in retirement
   });
 
@@ -60,29 +70,28 @@ function RetirementPlanner() {
     const partTimeDays = isSteve ? inputs.stevePartTimeDays : inputs.annePartTimeDays;
     
     const yearsToRetirement = calculateYearsToRetirement(currentAge);
-    const netReturnRate = (inputs.returnRate - inputs.adminFees) / 100;
+    const netReturnRate = calculateNetReturnRate(inputs.returnRate, inputs.adminFees);
     
     let balance = currentBalance;
     const projections = [];
     
     // Calculate daily salary for long service leave
-    const dailySalary = annualSalary / 260; // Assuming 260 working days per year
+    const dailySalary = calculateDailySalary(annualSalary);
     
     for (let year = 0; year <= yearsToRetirement; year++) {
       const age = currentAge + year;
-      let annualContribution = fortnightlyContribution * 26; // 26 fortnights per year
+      let annualContribution = fortnightlyContribution * TIME_PERIODS.FORTNIGHTS_PER_YEAR;
       
       // Adjust for part-time work
       if (age >= partTimeStartAge && age < inputs.retirementAge) {
-        const partTimeRatio = partTimeDays / 5;
+        const partTimeRatio = calculatePartTimeRatio(partTimeDays);
         annualContribution *= partTimeRatio;
       }
       
       // Add long service leave contribution (spread over first year)
       if (year === 0 && longServiceDays > 0) {
-        // Long service leave is paid as salary, so it contributes to super at 11% (employer contribution rate)
-        const longServicePay = dailySalary * longServiceDays;
-        const longServiceSuper = longServicePay * 0.11;
+        // Long service leave is paid as salary, so it contributes to super at employer contribution rate
+        const longServiceSuper = calculateLSLSuperContribution(longServiceDays, annualSalary);
         balance += longServiceSuper;
       }
       
@@ -108,7 +117,7 @@ function RetirementPlanner() {
 
   const calculateRetirementIncome = (totalBalance) => {
     const yearsInRetirement = inputs.lifeExpectancy - inputs.retirementAge;
-    const netReturnRate = (inputs.returnRate - inputs.adminFees - inputs.inflationRate) / 100;
+    const netReturnRate = calculateNetReturnRate(inputs.returnRate, inputs.adminFees, inputs.inflationRate);
     
     // Calculate sustainable income using present value annuity formula
     // This ensures the balance lasts exactly until life expectancy
@@ -260,7 +269,7 @@ function RetirementPlanner() {
                 placeholder="0"
               />
               <small style={{color: '#666', fontSize: '12px'}}>
-                LSL contributes to super at 11% employer rate
+                LSL contributes to super at {SUPER_RATES.EMPLOYER_CONTRIBUTION_PERCENTAGE}% employer rate
               </small>
             </div>
 
@@ -288,7 +297,7 @@ function RetirementPlanner() {
                 step="0.5"
               />
               <small style={{color: '#666', fontSize: '12px'}}>
-                {inputs.stevePartTimeDays < 5 ? `${(inputs.stevePartTimeDays / 5 * 100).toFixed(0)}% of full-time` : 'Full-time'}
+                {inputs.stevePartTimeDays < TIME_PERIODS.FULL_TIME_DAYS_PER_WEEK ? `${(calculatePartTimeRatio(inputs.stevePartTimeDays) * 100).toFixed(0)}% of full-time` : 'Full-time'}
               </small>
             </div>
           </div>
@@ -338,7 +347,7 @@ function RetirementPlanner() {
                 placeholder="0"
               />
               <small style={{color: '#666', fontSize: '12px'}}>
-                LSL contributes to super at 11% employer rate
+                LSL contributes to super at {SUPER_RATES.EMPLOYER_CONTRIBUTION_PERCENTAGE}% employer rate
               </small>
             </div>
 
@@ -366,7 +375,7 @@ function RetirementPlanner() {
                 step="0.5"
               />
               <small style={{color: '#666', fontSize: '12px'}}>
-                {inputs.annePartTimeDays < 5 ? `${(inputs.annePartTimeDays / 5 * 100).toFixed(0)}% of full-time` : 'Full-time'}
+                {inputs.annePartTimeDays < TIME_PERIODS.FULL_TIME_DAYS_PER_WEEK ? `${(calculatePartTimeRatio(inputs.annePartTimeDays) * 100).toFixed(0)}% of full-time` : 'Full-time'}
               </small>
             </div>
           </div>
@@ -602,31 +611,31 @@ function RetirementPlanner() {
               {inputs.steveLongServiceDays > 0 && (
                 <p>
                   <strong>Steve's Long Service Leave:</strong> {inputs.steveLongServiceDays} days 
-                  adds approximately {formatCurrency((inputs.steveCurrentSalary / 260) * inputs.steveLongServiceDays * 0.11)} 
-                  to superannuation (11% employer contribution).
+                  adds approximately {formatCurrency(calculateLSLSuperContribution(inputs.steveLongServiceDays, inputs.steveCurrentSalary))} 
+                  to superannuation ({SUPER_RATES.EMPLOYER_CONTRIBUTION_PERCENTAGE}% employer contribution).
                 </p>
               )}
               
               {inputs.anneLongServiceDays > 0 && (
                 <p>
                   <strong>Anne's Long Service Leave:</strong> {inputs.anneLongServiceDays} days 
-                  adds approximately {formatCurrency((inputs.anneCurrentSalary / 260) * inputs.anneLongServiceDays * 0.11)} 
-                  to superannuation (11% employer contribution).
+                  adds approximately {formatCurrency(calculateLSLSuperContribution(inputs.anneLongServiceDays, inputs.anneCurrentSalary))} 
+                  to superannuation ({SUPER_RATES.EMPLOYER_CONTRIBUTION_PERCENTAGE}% employer contribution).
                 </p>
               )}
               
-              {inputs.stevePartTimeDays < 5 && inputs.stevePartTimeStartAge < inputs.retirementAge && (
+              {inputs.stevePartTimeDays < TIME_PERIODS.FULL_TIME_DAYS_PER_WEEK && inputs.stevePartTimeStartAge < inputs.retirementAge && (
                 <p>
                   <strong>Steve's Part-Time Work:</strong> Reducing to {inputs.stevePartTimeDays} days/week 
-                  from age {inputs.stevePartTimeStartAge} reduces contributions to {(inputs.stevePartTimeDays / 5 * 100).toFixed(0)}% 
+                  from age {inputs.stevePartTimeStartAge} reduces contributions to {(calculatePartTimeRatio(inputs.stevePartTimeDays) * 100).toFixed(0)}% 
                   for {inputs.retirementAge - inputs.stevePartTimeStartAge} year(s).
                 </p>
               )}
               
-              {inputs.annePartTimeDays < 5 && inputs.annePartTimeStartAge < inputs.retirementAge && (
+              {inputs.annePartTimeDays < TIME_PERIODS.FULL_TIME_DAYS_PER_WEEK && inputs.annePartTimeStartAge < inputs.retirementAge && (
                 <p>
                   <strong>Anne's Part-Time Work:</strong> Reducing to {inputs.annePartTimeDays} days/week 
-                  from age {inputs.annePartTimeStartAge} reduces contributions to {(inputs.annePartTimeDays / 5 * 100).toFixed(0)}% 
+                  from age {inputs.annePartTimeStartAge} reduces contributions to {(calculatePartTimeRatio(inputs.annePartTimeDays) * 100).toFixed(0)}% 
                   for {inputs.retirementAge - inputs.annePartTimeStartAge} year(s).
                 </p>
               )}
@@ -718,7 +727,7 @@ Return Rate: ${scenario.inputs.returnRate}%
         <h3>Using This Retirement Planner</h3>
         <h4>Long Service Leave Strategy</h4>
         <p>
-          Long service leave is paid as ordinary salary, which means your employer will make the 11% 
+          Long service leave is paid as ordinary salary, which means your employer will make the {SUPER_RATES.EMPLOYER_CONTRIBUTION_PERCENTAGE}% 
           superannuation guarantee contribution on this payment. Taking LSL before retirement can boost 
           your super balance. Enter your available LSL days to see the impact.
         </p>
@@ -748,7 +757,7 @@ Return Rate: ${scenario.inputs.returnRate}%
           highly tax-effective, especially if you're in a higher tax bracket.
         </p>
         <p>
-          <strong>Retirement phase:</strong> After age 60, withdrawals from your super are generally tax-free. 
+          <strong>Retirement phase:</strong> After age {AGE_THRESHOLDS.TAX_FREE_WITHDRAWAL_AGE}, withdrawals from your super are generally tax-free. 
           This calculator shows sustainable income in today's dollars, adjusted for inflation.
         </p>
       </div>

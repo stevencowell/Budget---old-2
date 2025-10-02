@@ -1,4 +1,10 @@
 import React, { useState } from 'react';
+import {
+  CONTRIBUTION_CAPS,
+  SUPER_RATES,
+  AGE_THRESHOLDS,
+  TIME_PERIODS
+} from '../constants/financialConstants';
 
 function Dashboard() {
   const [profile, setProfile] = useState({
@@ -117,7 +123,7 @@ function Dashboard() {
               </div>
               <div className="stat-card">
                 <div className="stat-value">
-                  ${(parseFloat(profile.annualContribution) / 12).toLocaleString(undefined, {maximumFractionDigits: 0})}
+                  ${(parseFloat(profile.annualContribution) / TIME_PERIODS.MONTHS_PER_YEAR).toLocaleString(undefined, {maximumFractionDigits: 0})}
                 </div>
                 <div className="stat-label">Monthly Contribution</div>
               </div>
@@ -128,10 +134,10 @@ function Dashboard() {
 
       <div className="info-box">
         <h3>Key Superannuation Information</h3>
-        <p><strong>Concessional Contribution Cap (2025):</strong> $27,500 per year</p>
-        <p><strong>Non-concessional Contribution Cap:</strong> $110,000 per year</p>
-        <p><strong>Preservation Age:</strong> Typically 60 years old</p>
-        <p><strong>Superannuation Guarantee:</strong> 11.5% of ordinary time earnings (2025)</p>
+        <p><strong>Concessional Contribution Cap (2025):</strong> ${CONTRIBUTION_CAPS.CONCESSIONAL.toLocaleString()} per year</p>
+        <p><strong>Non-concessional Contribution Cap:</strong> ${CONTRIBUTION_CAPS.NON_CONCESSIONAL.toLocaleString()} per year</p>
+        <p><strong>Preservation Age:</strong> Typically {AGE_THRESHOLDS.PRESERVATION_AGE} years old</p>
+        <p><strong>Superannuation Guarantee:</strong> {SUPER_RATES.GUARANTEE_PERCENTAGE}% of ordinary time earnings (2025)</p>
       </div>
 
       <div className="info-box">

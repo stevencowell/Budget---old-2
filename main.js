@@ -1,3 +1,13 @@
+// Financial Constants
+const FINANCIAL_CONSTANTS = {
+  TAX_RATES: {
+    SUPER_CONTRIBUTIONS: 0.15, // 15% super contributions tax
+  },
+  TIME_PERIODS: {
+    MONTHS_PER_YEAR: 12,
+  }
+};
+
 const currency = new Intl.NumberFormat('en-AU', {
   style: 'currency',
   currency: 'AUD',
@@ -3939,12 +3949,12 @@ function generateTaxOptimizationTips(taxCalc) {
   if (taxCalc.grossIncome > 37000) {
     const maxConcessional = 30000;
     const potentialContribution = Math.min(10000, maxConcessional);
-    const taxSaving = potentialContribution * (marginalRate / 100) - potentialContribution * 0.15;
+    const taxSaving = potentialContribution * (marginalRate / 100) - potentialContribution * FINANCIAL_CONSTANTS.TAX_RATES.SUPER_CONTRIBUTIONS;
     
     tips.push({
       priority: 'high',
       title: 'Boost Your Super, Reduce Your Tax',
-      description: `Contributing ${currency.format(potentialContribution)} to super could save you approximately ${currency.format(taxSaving)} in tax (${marginalRate}% vs 15% tax rate).`,
+      description: `Contributing ${currency.format(potentialContribution)} to super could save you approximately ${currency.format(taxSaving)} in tax (${marginalRate}% vs ${FINANCIAL_CONSTANTS.TAX_RATES.SUPER_CONTRIBUTIONS * 100}% tax rate).`,
       savings: Math.round(taxSaving)
     });
   }

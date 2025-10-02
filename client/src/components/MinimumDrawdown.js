@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import {
+  MINIMUM_DRAWDOWN_RATES,
+  TIME_PERIODS,
+  AGE_THRESHOLDS
+} from '../constants/financialConstants';
 
 function MinimumDrawdown() {
   const [inputs, setInputs] = useState({
@@ -90,13 +95,13 @@ function MinimumDrawdown() {
             <div className="result-item">
               <span className="result-label">Monthly Minimum (approx):</span>
               <span className="result-value">
-                ${(results.minimumAmount / 12).toLocaleString(undefined, {maximumFractionDigits: 0})}
+                ${(results.minimumAmount / TIME_PERIODS.MONTHS_PER_YEAR).toLocaleString(undefined, {maximumFractionDigits: 0})}
               </span>
             </div>
             <div className="result-item">
               <span className="result-label">Fortnightly Minimum (approx):</span>
               <span className="result-value">
-                ${(results.minimumAmount / 26).toLocaleString(undefined, {maximumFractionDigits: 0})}
+                ${(results.minimumAmount / TIME_PERIODS.FORTNIGHTS_PER_YEAR).toLocaleString(undefined, {maximumFractionDigits: 0})}
               </span>
             </div>
           </div>
@@ -105,13 +110,15 @@ function MinimumDrawdown() {
 
       <div className="info-box">
         <h3>Minimum Drawdown Rates by Age</h3>
-        <p><strong>Under 65:</strong> 4%</p>
-        <p><strong>65-74:</strong> 5%</p>
-        <p><strong>75-79:</strong> 6%</p>
-        <p><strong>80-84:</strong> 7%</p>
-        <p><strong>85-89:</strong> 9%</p>
-        <p><strong>90-94:</strong> 11%</p>
-        <p><strong>95+:</strong> 14%</p>
+        {MINIMUM_DRAWDOWN_RATES.map((bracket, index) => (
+          <p key={index}>
+            <strong>
+              {bracket.minAge === 0 ? 'Under 65' : 
+               bracket.maxAge === Infinity ? `${bracket.minAge}+` : 
+               `${bracket.minAge}-${bracket.maxAge}`}:
+            </strong> {bracket.percentage}%
+          </p>
+        ))}
       </div>
 
       <div className="info-box">
@@ -120,7 +127,7 @@ function MinimumDrawdown() {
         <p>• You can withdraw more than the minimum, but not less (except in your first year)</p>
         <p>• The percentage is based on your age at the start of the financial year</p>
         <p>• Minimum amounts are calculated on your account balance at the start of each financial year</p>
-        <p>• Pension payments from super are generally tax-free if you're 60 or over</p>
+        <p>• Pension payments from super are generally tax-free if you're {AGE_THRESHOLDS.TAX_FREE_WITHDRAWAL_AGE} or over</p>
       </div>
     </div>
   );
