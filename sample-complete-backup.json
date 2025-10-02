@@ -1,0 +1,11 @@
+{
+  "budget": null,
+  "scenarios": [],
+  "categoryChanges": null,
+  "subcategoryRules": null,
+  "taxChecklists": {},
+  "superannuationData": {},
+  "exportDate": "2025-10-02T00:00:00.000Z",
+  "version": "1.0",
+  "_readme": "This is a sample backup file structure for the Cowell Family Budget App. When you export your data, it will look like this but with your actual saved information. You can import this file to restore all your customizations after clearing data."
+}

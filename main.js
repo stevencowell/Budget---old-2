@@ -2480,19 +2480,67 @@ function initDataManagement(data) {
 
   if (exportBtn) {
     exportBtn.addEventListener('click', () => {
+      // Create comprehensive export including all localStorage data
       const exportData = {
         budget: storage.getBudgetItems(),
         scenarios: storage.getScenarios(),
-        exportDate: new Date().toISOString()
+        categoryChanges: null,
+        subcategoryRules: null,
+        taxChecklists: {},
+        superannuationData: {},
+        exportDate: new Date().toISOString(),
+        version: '1.0'
       };
+      
+      // Export category changes
+      try {
+        const categoryChanges = localStorage.getItem('cowell_budget_category_changes');
+        if (categoryChanges) {
+          exportData.categoryChanges = JSON.parse(categoryChanges);
+        }
+      } catch (error) {
+        console.warn('Error exporting category changes:', error);
+      }
+      
+      // Export subcategory rules
+      try {
+        const subcategoryRules = localStorage.getItem('cowell_budget_subcategory_rules');
+        if (subcategoryRules) {
+          exportData.subcategoryRules = JSON.parse(subcategoryRules);
+        }
+      } catch (error) {
+        console.warn('Error exporting subcategory rules:', error);
+      }
+      
+      // Export all tax checklists and superannuation data
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('tax_checklist_')) {
+            exportData.taxChecklists[key] = localStorage.getItem(key);
+          } else if (key && key.startsWith('superannuation_')) {
+            try {
+              const value = localStorage.getItem(key);
+              exportData.superannuationData[key] = JSON.parse(value);
+            } catch {
+              exportData.superannuationData[key] = localStorage.getItem(key);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Error exporting additional data:', error);
+      }
       
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `cowell-budget-export-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `cowell-budget-complete-backup-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
+      
+      // Show success message
+      alert('✅ Complete backup exported successfully!\n\nThis includes:\n• Budget items\n• Scenarios\n• Category changes\n• Subcategory rules\n• Tax checklists\n• Superannuation data\n\nYou can import this file later to restore all your data.');
     });
   }
 
@@ -2509,21 +2557,72 @@ function initDataManagement(data) {
       reader.onload = (event) => {
         try {
           const imported = JSON.parse(event.target.result);
+          let itemsRestored = [];
           
+          // Restore budget items
           if (imported.budget) {
             storage.saveBudgetItems(imported.budget);
-          }
-          if (imported.scenarios) {
-            storage.saveScenarios(imported.scenarios);
+            itemsRestored.push('Budget items');
           }
           
-          alert('Data imported successfully! Refreshing page...');
+          // Restore scenarios
+          if (imported.scenarios) {
+            storage.saveScenarios(imported.scenarios);
+            itemsRestored.push('Scenarios');
+          }
+          
+          // Restore category changes
+          if (imported.categoryChanges) {
+            localStorage.setItem('cowell_budget_category_changes', JSON.stringify(imported.categoryChanges));
+            itemsRestored.push('Category changes');
+          }
+          
+          // Restore subcategory rules
+          if (imported.subcategoryRules) {
+            localStorage.setItem('cowell_budget_subcategory_rules', JSON.stringify(imported.subcategoryRules));
+            itemsRestored.push('Subcategory rules');
+          }
+          
+          // Restore tax checklists
+          if (imported.taxChecklists) {
+            Object.keys(imported.taxChecklists).forEach(key => {
+              localStorage.setItem(key, imported.taxChecklists[key]);
+            });
+            const taxCount = Object.keys(imported.taxChecklists).length;
+            if (taxCount > 0) {
+              itemsRestored.push(`${taxCount} tax checklist item(s)`);
+            }
+          }
+          
+          // Restore superannuation data
+          if (imported.superannuationData) {
+            Object.keys(imported.superannuationData).forEach(key => {
+              const value = imported.superannuationData[key];
+              if (typeof value === 'string') {
+                localStorage.setItem(key, value);
+              } else {
+                localStorage.setItem(key, JSON.stringify(value));
+              }
+            });
+            const superCount = Object.keys(imported.superannuationData).length;
+            if (superCount > 0) {
+              itemsRestored.push(`${superCount} superannuation item(s)`);
+            }
+          }
+          
+          if (itemsRestored.length > 0) {
+            alert(`✅ Data imported successfully!\n\nRestored:\n• ${itemsRestored.join('\n• ')}\n\nThe page will now reload to apply changes.`);
+          } else {
+            alert('⚠️ No data found to import. The file may be empty or in an old format.');
+          }
+          
           window.location.reload();
         } catch (error) {
-          alert('Error importing data: ' + error.message);
+          alert('❌ Error importing data: ' + error.message + '\n\nPlease make sure you selected a valid backup file.');
         }
       };
       reader.readAsText(file);
+      e.target.value = ''; // Reset file input
     });
   }
 
