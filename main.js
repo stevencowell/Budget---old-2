@@ -141,9 +141,9 @@ function initNavigation() {
       
       // Open the React superannuation app
       // In development, the React app runs on port 3000
-      // In production, it's deployed to GitHub Pages at Budget---old-2 repository
+      // In production, it's deployed to GitHub Pages at Budget---old-2 repository under /app/
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const superAppUrl = isLocal ? 'http://localhost:3000' : 'https://stevencowell.github.io/Budget---old-2/';
+      const superAppUrl = isLocal ? 'http://localhost:3000' : 'https://stevencowell.github.io/Budget---old-2/app/';
       window.open(superAppUrl, '_blank');
     });
   }
