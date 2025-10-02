@@ -15,10 +15,19 @@ function App() {
     if (window.opener) {
       window.close();
     } else {
-      // If we can't close (user navigated directly), try to go back to the finance app
+      // Navigate back to the finance app
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const financeAppUrl = isLocal ? 'http://localhost:5000' : window.location.origin;
-      window.location.href = financeAppUrl;
+      if (isLocal) {
+        // In development, go back to the local server
+        window.location.href = 'http://localhost:5000';
+      } else {
+        // In production, go back to the main Budget app (parent directory)
+        // Current URL: https://stevencowell.github.io/Budget---old-2/app/
+        // Target URL: https://stevencowell.github.io/Budget---old-2/
+        const currentPath = window.location.pathname;
+        const parentPath = currentPath.replace(/\/app\/?$/, '/');
+        window.location.href = window.location.origin + parentPath;
+      }
     }
   };
 
