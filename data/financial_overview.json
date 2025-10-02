@@ -1,12 +1,12 @@
 {
-  "generated_at": "2025-10-01T00:46:01Z",
+  "generated_at": "2025-10-02T08:38:47Z",
   "metrics": {
     "total_income": 277737.35,
     "total_expense": 297727.05,
     "net_position": -19989.7,
     "savings_rate": -7.2,
     "average_monthly_net": -1537.67,
-    "essential_annual": 204801.08,
+    "essential_annual": 65913.77,
     "discretionary_annual": 92925.97
   },
   "category_summary": [
@@ -689,22 +689,6 @@
       "actual": null,
       "variance": null,
       "notes": "automatic deduction fortnightly"
-    },
-    {
-      "group": "Miscellaneous Expenses",
-      "item": "Total",
-      "annual_budget": 169270.0,
-      "actual": null,
-      "variance": null,
-      "notes": ""
-    },
-    {
-      "group": "Miscellaneous Expenses",
-      "item": "Cash Flow",
-      "annual_budget": 10702.0,
-      "actual": null,
-      "variance": null,
-      "notes": ""
     }
   ],
   "airbnb_summary": {
@@ -17640,7 +17624,7 @@
   ],
   "calc_defaults": {
     "fortnightly_income": 6922.0,
-    "essential_fortnight": 7876.96,
+    "essential_fortnight": 2535.14,
     "discretionary_fortnight": 3574.08,
     "monthly_surplus": -1537.67,
     "airbnb_income": 25612.49,

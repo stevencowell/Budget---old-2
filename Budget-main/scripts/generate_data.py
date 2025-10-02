@@ -244,11 +244,12 @@ ESSENTIAL_SUBCATEGORIES = {
     "Fuel",
     "Vehicle Costs",
     "Education Fees",
-    "Airbnb Loan Payment",
-    "Airbnb Utilities",
-    "Airbnb Rates",
-    "Airbnb Cleaning",
-    "Airbnb Maintenance",
+    # Airbnb expenses excluded - treated as separate investment property
+    # "Airbnb Loan Payment",
+    # "Airbnb Utilities",
+    # "Airbnb Rates",
+    # "Airbnb Cleaning",
+    # "Airbnb Maintenance",
 }
 
 
@@ -752,12 +753,23 @@ def compute_budget_progress(budget_items: list[dict], aggregates: dict) -> list[
 def essential_spending(aggregates: dict) -> dict:
     sub_totals = aggregates["subcategory_totals"]
     essential_total = 0.0
+    # Track Airbnb expenses separately - they're investment property costs, not personal expenses
+    airbnb_expenses = 0.0
+    
     for (category, subcategory), values in sub_totals.items():
         if subcategory in ESSENTIAL_SUBCATEGORIES:
             essential_total += values["expense"]
+        # Sum up all Airbnb property expenses
+        if category == "Airbnb Property":
+            airbnb_expenses += values["expense"]
+    
     total_income = aggregates["total_income"]
     total_expense = aggregates["total_expense"]
-    discretionary = max(total_expense - essential_total, 0.0)
+    
+    # Personal expenses = total expenses - Airbnb investment property expenses
+    personal_expenses = total_expense - airbnb_expenses
+    discretionary = max(personal_expenses - essential_total, 0.0)
+    
     return {
         "annual_essential": essential_total,
         "annual_discretionary": discretionary,
