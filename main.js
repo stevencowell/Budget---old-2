@@ -117,6 +117,45 @@ class StorageManager {
   saveScenarios(scenarios) {
     localStorage.setItem(this.prefix + 'scenarios', JSON.stringify(scenarios));
   }
+
+  /**
+   * Clear all app data from localStorage
+   * This includes: budget items, scenarios, category changes, subcategory rules, and tax checklist
+   */
+  clearAllAppData() {
+    try {
+      // Clear all items with our prefix
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith(this.prefix) || key.startsWith('tax_checklist_') || key.startsWith('superannuation_'))) {
+          keysToRemove.push(key);
+        }
+      }
+      
+      // Remove all identified keys
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      return true;
+    } catch (error) {
+      console.error('Error clearing all app data:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get a list of all stored data keys for transparency
+   */
+  getAllStoredKeys() {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith(this.prefix) || key.startsWith('tax_checklist_') || key.startsWith('superannuation_'))) {
+        keys.push(key);
+      }
+    }
+    return keys;
+  }
 }
 
 const storage = new StorageManager();
@@ -2437,6 +2476,7 @@ function initDataManagement(data) {
   const exportBtn = document.getElementById('exportData');
   const importBtn = document.getElementById('importData');
   const importFile = document.getElementById('importFile');
+  const clearAllBtn = document.getElementById('clearAllData');
 
   if (exportBtn) {
     exportBtn.addEventListener('click', () => {
@@ -2484,6 +2524,44 @@ function initDataManagement(data) {
         }
       };
       reader.readAsText(file);
+    });
+  }
+
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', () => {
+      // Get list of what will be cleared for transparency
+      const keysToRemove = storage.getAllStoredKeys();
+      
+      // Create detailed confirmation message
+      const message = `⚠️ WARNING: This will permanently delete ALL saved data from this app, including:
+
+• Budget customizations and saved items
+• Financial planning scenarios
+• Category changes and subcategory rules
+• Tax document checklist progress
+• Superannuation app data (if any)
+
+${keysToRemove.length > 0 ? `\nYou have ${keysToRemove.length} saved item(s) that will be deleted.` : '\nNo saved data found.'}
+
+This will reset the app to its original state, making it fresh for sharing with others.
+
+Are you ABSOLUTELY SURE you want to proceed?
+
+Tip: Consider exporting your data first using the "Export Data" button.`;
+
+      if (confirm(message)) {
+        // Double confirmation for safety
+        if (confirm('FINAL CONFIRMATION: Click OK to permanently delete all data, or Cancel to keep your data safe.')) {
+          const success = storage.clearAllAppData();
+          
+          if (success) {
+            alert('✅ All data has been cleared successfully!\n\nThe app will now reload with a fresh state.');
+            window.location.reload();
+          } else {
+            alert('❌ There was an error clearing the data. Please try again or check the browser console for details.');
+          }
+        }
+      }
     });
   }
 }
