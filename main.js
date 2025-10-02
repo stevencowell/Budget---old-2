@@ -910,7 +910,10 @@ function initBudgetTable(items) {
         }
         const value = item[field];
         if (typeof value === 'number' && Number.isFinite(value)) {
-          sum += value;
+          // Income should be subtracted from expenses (or treated as negative expense)
+          // Check if this is an income item
+          const isIncome = item.item === 'Income' || item.group === 'Income';
+          sum += isIncome ? -value : value;
           hasValue = true;
         }
       });
