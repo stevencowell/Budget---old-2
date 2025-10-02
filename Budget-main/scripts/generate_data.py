@@ -102,6 +102,9 @@ def load_budget_items() -> list[dict]:
         if annual is None and fortnight is None:
             current_group = name
             continue
+        # Skip summary rows (Total, Cash Flow) to prevent double-counting
+        if name in ("Total", "Cash Flow"):
+            continue
         items.append(
             {
                 "group": current_group or "Miscellaneous",
