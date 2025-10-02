@@ -115,7 +115,7 @@ function RetirementIncome() {
           <div className="info-box">
             <h3>Understanding the 4% Rule</h3>
             <p>The "4% rule" is a common retirement planning guideline suggesting you can withdraw 4% of your retirement savings annually, adjusted for inflation, with a high probability your money will last 30 years.</p>
-            <p style={{marginTop: '10px'}}><strong>Important:</strong> This calculation doesn't account for investment returns during retirement or inflation. Consider consulting a financial advisor for a comprehensive retirement plan.</p>
+            <p style={{marginTop: '10px'}}><strong>Important:</strong> This calculation doesn't account for investment returns during retirement or inflation. Consider consulting a financial adviser for a comprehensive retirement plan.</p>
           </div>
         </>
       )}

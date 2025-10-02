@@ -194,7 +194,7 @@ Age-based minimum withdrawal rates:
 
 ⚠️ **This application is for informational and educational purposes only.**
 
-- Not financial advice - consult a licensed financial advisor
+- Not financial advice - consult a licensed financial adviser
 - Projections assume consistent returns - actual returns vary
 - Tax calculations are simplified - consult a tax professional
 - Australian superannuation rules and rates may change

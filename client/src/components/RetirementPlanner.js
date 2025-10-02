@@ -757,7 +757,7 @@ Return Rate: ${scenario.inputs.returnRate}%
         <p style={{margin: 0, color: '#856404'}}>
           <strong>Important Disclaimer:</strong> This calculator provides estimates based on your inputs 
           and assumptions. Actual investment returns will vary, and past performance doesn't guarantee 
-          future results. Consider seeking advice from a licensed financial adviser for personalized 
+          future results. Consider seeking advice from a licensed financial adviser for personalised 
           retirement planning. Don't forget to factor in the Age Pension, which may supplement your super income.
         </p>
       </div>
