@@ -5,6 +5,7 @@ import ProjectionCalculator from './components/ProjectionCalculator';
 import RetirementIncome from './components/RetirementIncome';
 import TaxBenefits from './components/TaxBenefits';
 import MinimumDrawdown from './components/MinimumDrawdown';
+import RetirementPlanner from './components/RetirementPlanner';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -22,6 +23,12 @@ function App() {
           onClick={() => setActiveTab('dashboard')}
         >
           Dashboard
+        </button>
+        <button 
+          className={activeTab === 'planner' ? 'active' : ''} 
+          onClick={() => setActiveTab('planner')}
+        >
+          Retirement Planner
         </button>
         <button 
           className={activeTab === 'projection' ? 'active' : ''} 
@@ -51,6 +58,7 @@ function App() {
 
       <main className="main-content">
         {activeTab === 'dashboard' && <Dashboard />}
+        {activeTab === 'planner' && <RetirementPlanner />}
         {activeTab === 'projection' && <ProjectionCalculator />}
         {activeTab === 'retirement' && <RetirementIncome />}
         {activeTab === 'tax' && <TaxBenefits />}
