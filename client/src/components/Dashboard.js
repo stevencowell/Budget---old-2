@@ -69,6 +69,30 @@ function Dashboard() {
             />
           </div>
         </div>
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <button 
+            className="btn-primary" 
+            style={{
+              padding: '12px 30px',
+              fontSize: '16px',
+              backgroundColor: '#6366f1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+            onClick={() => {
+              if (profile.currentBalance && profile.age && profile.retirementAge) {
+                alert('Profile saved! Your details have been recorded. Use the tabs above to explore different calculators.');
+              } else {
+                alert('Please fill in all required fields (Current Age, Planned Retirement Age, and Current Balance)');
+              }
+            }}
+          >
+            Save Profile
+          </button>
+        </div>
       </div>
 
       {profile.currentBalance && profile.age && profile.retirementAge && (
