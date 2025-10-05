@@ -488,8 +488,12 @@ function recalculateTopIncome(transactions) {
   const incomeMap = new Map();
 
   transactions.forEach(tx => {
-    if (tx.amount > 0 && tx.category) {
-      incomeMap.set(tx.category, (incomeMap.get(tx.category) || 0) + tx.amount);
+    if (tx.amount > 0 && tx.type === 'income' && tx.description) {
+      // Extract merchant name from description (before "From:" or take full description)
+      let merchant = tx.description.split(' From:')[0].trim();
+      // Convert to title case to match original data format
+      merchant = merchant.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+      incomeMap.set(merchant, (incomeMap.get(merchant) || 0) + tx.amount);
     }
   });
 
