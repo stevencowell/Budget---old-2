@@ -665,6 +665,21 @@ input[type="range"] {
   gap: 1rem;
 }
 
+.rank-list li.clickable {
+  transition: all 0.2s ease;
+}
+
+.rank-list li.clickable:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+}
+
+.rank-list li.clickable:active {
+  transform: translateX(2px);
+}
+
 /* Transaction controls */
 .transaction-controls {
   display: flex;
