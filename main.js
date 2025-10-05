@@ -951,9 +951,11 @@ function showMerchantTransactionDetails(merchant, merchantList, allTransactions)
 }
 
 function showIncomeTransactionDetails(incomeSource, incomeList, allTransactions) {
-  // Filter transactions for this income source (by category)
+  // Filter transactions for this income source (by description match)
   const incomeTransactions = allTransactions.filter(tx => {
-    return tx.category === incomeSource && tx.amount > 0;
+    return tx.description && 
+           tx.description.toUpperCase().includes(incomeSource.toUpperCase()) && 
+           tx.amount > 0;
   });
   
   // Find the income summary
