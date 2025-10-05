@@ -514,8 +514,8 @@ function refreshOverview() {
   renderMonthlyTrendChart(filteredMonthlyCashflow);
   renderCategoryPieChart(recalculatedCategories);
   renderCategoryBars(recalculatedCategories.filter((row) => row.category !== 'Transfers'), filteredTransactions);
-  renderRankList(recalculatedMerchants, 'merchantList');
-  renderIncomeList(recalculatedIncome);
+  renderRankList(recalculatedMerchants, 'merchantList', filteredTransactions);
+  renderIncomeList(recalculatedIncome, filteredTransactions);
 
   // Update the period selector to show number of months
   updatePeriodLabel(filteredMonthlyCashflow.length);
@@ -846,6 +846,210 @@ function showCategoryTransactionDetails(category, categorySummary, allTransactio
   });
 }
 
+function showMerchantTransactionDetails(merchant, merchantList, allTransactions) {
+  // Filter transactions for this merchant
+  const merchantTransactions = allTransactions.filter(tx => {
+    // Match merchant name in description (case insensitive)
+    return tx.description && tx.description.toLowerCase().includes(merchant.toLowerCase());
+  });
+  
+  // Find the merchant summary
+  const summary = merchantList.find(m => m.merchant === merchant);
+  
+  // Calculate totals
+  const totalAmount = merchantTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+  
+  // Create a modal/popup to display the details
+  const modal = document.createElement('div');
+  modal.className = 'transaction-detail-modal';
+  modal.innerHTML = `
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>${merchant}</h2>
+        <button class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="category-summary-stats">
+          <div class="stat-box">
+            <div class="stat-label">Total Spent</div>
+            <div class="stat-value negative">${currency.format(summary?.total || Math.abs(totalAmount))}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Transactions</div>
+            <div class="stat-value">${merchantTransactions.length}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Average Amount</div>
+            <div class="stat-value">${merchantTransactions.length > 0 ? currency.format(Math.abs(totalAmount) / merchantTransactions.length) : '$0.00'}</div>
+          </div>
+        </div>
+        <div class="transaction-detail-list">
+          <h3>Transaction Details</h3>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th>Subcategory</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${merchantTransactions
+                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                  .map(tx => {
+                    const amountClass = tx.amount < 0 ? 'variance-negative' : 'variance-positive';
+                    return `
+                      <tr>
+                        <td>${new Date(tx.date).toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                        <td>${tx.description}</td>
+                        <td>${tx.category || '—'}</td>
+                        <td>${tx.subcategory || '—'}</td>
+                        <td class="${amountClass}">${currencyPrecise.format(tx.amount)}</td>
+                      </tr>
+                    `;
+                  })
+                  .join('') || '<tr><td colspan="5">No transactions found for this merchant</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Add event listeners to close modal
+  const closeBtn = modal.querySelector('.modal-close');
+  const overlay = modal.querySelector('.modal-overlay');
+  
+  const closeModal = () => {
+    modal.remove();
+  };
+  
+  closeBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', closeModal);
+  
+  // Close on Escape key
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      document.removeEventListener('keydown', handleEscape);
+    }
+  };
+  document.addEventListener('keydown', handleEscape);
+  
+  // Prevent body scroll when modal is open
+  document.body.style.overflow = 'hidden';
+  modal.addEventListener('remove', () => {
+    document.body.style.overflow = '';
+  });
+}
+
+function showIncomeTransactionDetails(incomeSource, incomeList, allTransactions) {
+  // Filter transactions for this income source (by category)
+  const incomeTransactions = allTransactions.filter(tx => {
+    return tx.category === incomeSource && tx.amount > 0;
+  });
+  
+  // Find the income summary
+  const summary = incomeList.find(i => i.merchant === incomeSource);
+  
+  // Calculate totals
+  const totalAmount = incomeTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+  
+  // Create a modal/popup to display the details
+  const modal = document.createElement('div');
+  modal.className = 'transaction-detail-modal';
+  modal.innerHTML = `
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>${incomeSource}</h2>
+        <button class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="category-summary-stats">
+          <div class="stat-box">
+            <div class="stat-label">Total Income</div>
+            <div class="stat-value positive">${currency.format(summary?.total || totalAmount)}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Transactions</div>
+            <div class="stat-value">${incomeTransactions.length}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Average Amount</div>
+            <div class="stat-value">${incomeTransactions.length > 0 ? currency.format(totalAmount / incomeTransactions.length) : '$0.00'}</div>
+          </div>
+        </div>
+        <div class="transaction-detail-list">
+          <h3>Transaction Details</h3>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Subcategory</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${incomeTransactions
+                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                  .map(tx => {
+                    return `
+                      <tr>
+                        <td>${new Date(tx.date).toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                        <td>${tx.description}</td>
+                        <td>${tx.subcategory || '—'}</td>
+                        <td class="variance-positive">${currencyPrecise.format(tx.amount)}</td>
+                      </tr>
+                    `;
+                  })
+                  .join('') || '<tr><td colspan="4">No transactions found for this income source</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Add event listeners to close modal
+  const closeBtn = modal.querySelector('.modal-close');
+  const overlay = modal.querySelector('.modal-overlay');
+  
+  const closeModal = () => {
+    modal.remove();
+  };
+  
+  closeBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', closeModal);
+  
+  // Close on Escape key
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      document.removeEventListener('keydown', handleEscape);
+    }
+  };
+  document.addEventListener('keydown', handleEscape);
+  
+  // Prevent body scroll when modal is open
+  document.body.style.overflow = 'hidden';
+  modal.addEventListener('remove', () => {
+    document.body.style.overflow = '';
+  });
+}
+
 function renderAirbnb(airbnb) {
   const container = document.getElementById('airbnbSummary');
   if (!container) return;
@@ -875,20 +1079,36 @@ function renderAirbnb(airbnb) {
   `;
 }
 
-function renderRankList(list, containerId) {
+function renderRankList(list, containerId, allTransactions) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = list
-    .map((item) => `<li><span>${item.merchant}</span><span>${currencyPrecise.format(item.total)}</span></li>`)
+    .map((item) => `<li class="clickable" data-merchant="${item.merchant}" style="cursor: pointer;"><span>${item.merchant}</span><span>${currencyPrecise.format(item.total)}</span></li>`)
     .join('');
+  
+  // Add click handlers to show transaction details
+  container.querySelectorAll('li').forEach(item => {
+    item.addEventListener('click', () => {
+      const merchant = item.dataset.merchant;
+      showMerchantTransactionDetails(merchant, list, allTransactions);
+    });
+  });
 }
 
-function renderIncomeList(list) {
+function renderIncomeList(list, allTransactions) {
   const container = document.getElementById('incomeList');
   if (!container) return;
   container.innerHTML = list
-    .map((item) => `<li><span>${item.merchant}</span><span>${currencyPrecise.format(item.total)}</span></li>`)
+    .map((item) => `<li class="clickable" data-income-source="${item.merchant}" style="cursor: pointer;"><span>${item.merchant}</span><span>${currencyPrecise.format(item.total)}</span></li>`)
     .join('');
+  
+  // Add click handlers to show transaction details
+  container.querySelectorAll('li').forEach(item => {
+    item.addEventListener('click', () => {
+      const incomeSource = item.dataset.incomeSource;
+      showIncomeTransactionDetails(incomeSource, list, allTransactions);
+    });
+  });
 }
 
 // ==================== Budget Manager ====================
@@ -4115,8 +4335,8 @@ async function init() {
     renderCategoryPieChart(data.category_summary);
     renderCategoryBars(data.category_summary.filter((row) => row.category !== 'Transfers'), data.recent_transactions);
     renderAirbnb(data.airbnb_summary);
-    renderRankList(data.top_merchants, 'merchantList');
-    renderIncomeList(data.top_income_sources);
+    renderRankList(data.top_merchants, 'merchantList', data.recent_transactions);
+    renderIncomeList(data.top_income_sources, data.recent_transactions);
 
     // Budget view
     const budgetState = initBudgetTable(data.budget_summary);
